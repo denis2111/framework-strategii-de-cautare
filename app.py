@@ -36,12 +36,11 @@ maze = [
     [1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1]
 ]
 
-
-problem = MazeState(30, 30, (0,1), (0,1), (2,4), maze)
+problem = MazeState(30, 30, (0,1), (0,1), (2, 2), maze)
 
 ps = ProblemSolver(problem)
 
-solution = ps.greedy()
+solution = ps.bidirectional()
 
 if not solution:
     print("nu")

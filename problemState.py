@@ -10,3 +10,6 @@ class ProblemState:
 
     def score_function(self):
         pass
+
+    def get_reversed_problem(self):
+        pass

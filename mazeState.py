@@ -54,3 +54,11 @@ class MazeState(ProblemState):
         x, y = self.current_position
         x2, y2 = self.end_position
         return abs(x - x2) + abs(y - y2)
+
+    def get_reversed_problem(self):
+        return MazeState(self.n,
+                         self.m,
+                         self.end_position,
+                         self.end_position,
+                         self.start_position,
+                         self.maze)
