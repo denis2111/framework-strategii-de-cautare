@@ -80,29 +80,35 @@ class ProblemSolver:
 
         while not problem in reversed_visited_states:
             next_states = problem.get_next_states()
-            for state in next_states:
-                if state in visited_states:
+            for next_state in next_states:
+                if next_state in visited_states:
                     continue
 
-                visited_states.append(state)
-                states_queue.append(state)
+                visited_states.append(next_state)
+                states_queue.append(next_state)
+
+                if next_state.is_final_state():
+                    return next_state, (visited_states, reversed_visited_states)
 
             if not states_queue:
-                return visited_states
+                return None, (visited_states, reversed_visited_states)
             problem = states_queue.pop(0)
 
             if reversed_states_queue:
                 next_states = reversed_states_queue.pop().get_next_states()
 
-                for state in next_states:
-                    if state in reversed_visited_states:
+                for next_state in next_states:
+                    if next_state in reversed_visited_states:
                         continue
 
-                    if state in visited_states:
-                        return state, (visited_states, reversed_visited_states)
+                    if next_state in visited_states:
+                        return next_state, (visited_states, reversed_visited_states)
 
-                    reversed_visited_states.append(state)
-                    reversed_states_queue.append(state)
+                    reversed_visited_states.append(next_state)
+                    reversed_states_queue.append(next_state)
+
+                    if next_state.is_final_state():
+                        return next_state, (visited_states, reversed_visited_states)
 
         return problem, (visited_states, reversed_visited_states)
 
@@ -119,6 +125,9 @@ class ProblemSolver:
 
                 visited_states.append(state)
                 states_queue.append(state)
+
+                if state.is_final_state():
+                    return visited_states
 
             if not states_queue:
                 return visited_states
