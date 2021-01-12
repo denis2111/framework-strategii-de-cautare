@@ -77,6 +77,7 @@ class ProblemSolver:
         states_queue = [problem]
         reversed_visited_states = [reversed_problem]
         reversed_states_queue = [reversed_problem]
+        steps_order = [problem, reversed_problem]
 
         while not problem in reversed_visited_states:
             next_states = problem.get_next_states()
@@ -86,31 +87,33 @@ class ProblemSolver:
 
                 visited_states.append(next_state)
                 states_queue.append(next_state)
+                steps_order.append(next_state)
 
-                if next_state.is_final_state():
-                    return next_state, (visited_states, reversed_visited_states)
+                if next_state in reversed_visited_states:
+                    return steps_order
 
             if not states_queue:
-                return None, (visited_states, reversed_visited_states)
+                return steps_order
             problem = states_queue.pop(0)
 
             if reversed_states_queue:
-                next_states = reversed_states_queue.pop().get_next_states()
+                next_states = reversed_states_queue.pop(0).get_next_states()
 
                 for next_state in next_states:
                     if next_state in reversed_visited_states:
                         continue
 
                     if next_state in visited_states:
-                        return next_state, (visited_states, reversed_visited_states)
+                        return steps_order
 
                     reversed_visited_states.append(next_state)
                     reversed_states_queue.append(next_state)
+                    steps_order.append(next_state)
 
-                    if next_state.is_final_state():
-                        return next_state, (visited_states, reversed_visited_states)
+                    if next_state in visited_states:
+                        return steps_order
 
-        return problem, (visited_states, reversed_visited_states)
+        return steps_order
 
     def BFS(self):
         problem = self.problem

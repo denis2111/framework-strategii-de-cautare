@@ -182,7 +182,7 @@ class MazeInterface(tk.Frame):
             Label(failure_window, text="No solution found!", font="Lato 14", foreground='red', justify='center').grid(
                 pady=20, padx=20)
         else:
-            if self.choosen_algorithm.get() == "bidirectional":
+            if self.choosen_algorithm.get() == "bidirectional" and False:
                 x = solution[0].current_position[0]
                 y = solution[0].current_position[1]
                 print("bidirectional:", x, y)
