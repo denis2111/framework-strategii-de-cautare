@@ -162,7 +162,7 @@ class MazeInterface(tk.Frame):
                 self.maze[row][col] = 2  # exit
                 self.exit_cell = (row, col)
                 if self.cell:
-                    self.canvas.delete(self.cell)
+                    self.canvas.itemconfigure(self.cell, fill='white', width=1)
             elif self.color == 'red':
                 if self.start_cell:
                     self.maze[self.start_cell[0]][self.start_cell[1]] = 0
@@ -171,7 +171,7 @@ class MazeInterface(tk.Frame):
                 self.maze[row][col] = 3  # start
                 self.start_cell = (row, col)
                 if self.cell:
-                    self.canvas.delete(self.cell)
+                    self.canvas.itemconfigure(self.cell, fill='white', width=1)
                 self.cell = self.start_cell
                 self.canvas.itemconfigure(self.cell, fill="#c1c4c9", width=1)
         elif self.maze[row][col] == 1:
@@ -196,7 +196,6 @@ class MazeInterface(tk.Frame):
             if self.choosen_algorithm.get() == "bidirectional":
                 x = solution[-1].current_position[0]
                 y = solution[-1].current_position[1]
-                print("bidirectional:", x, y)
                 self.common_cell = (x, y)
                 common_item_id = x * self.maze_width + y + 1
                 self.canvas.itemconfigure(common_item_id, fill="blue")
@@ -204,25 +203,17 @@ class MazeInterface(tk.Frame):
             for state in solution:
                 print(state.current_position)
                 self.move_cell(state.current_position[0], state.current_position[1])
+            self.check_final()
 
     def move_cell(self, row, col):
-        # if not self.keep_path:
-        #     self.canvas.itemconfigure(self.cell, width=1, fill='white')
-        # x0 = col * self.size
-        # y0 = row * self.size
-        # x1 = x0 + self.size
-        # y1 = y0 + self.size
         if not self.keep_path and self.cell != self.start_cell:
             self.canvas.itemconfigure(self.cell, width=1, fill='white')
         if (row, col) != self.start_cell and (row, col) != self.exit_cell and (row, col) != self.common_cell:
-
             self.cell = row * self.maze_width + col + 1
             self.canvas.itemconfigure(self.cell, width=1, fill='#c1c4c9')
-            # self.cell = self.canvas.create_rectangle(x0, y0, x1, y1, width=1, fill='#c1c4c9')
-
             self.update()
             time.sleep(.5)
-            self.check_status()
+            # self.check_status()
 
     def clear_path(self):
         if not self.solution:
@@ -241,19 +232,21 @@ class MazeInterface(tk.Frame):
     def keep_solution(self):
         self.keep_path = not self.keep_path
 
-    def get_cell_coords(self):
-        position = self.canvas.coords(self.cell)
-        x = int(position[0] // self.size)
-        y = int(position[1] // self.size)
-        return x, y
-
-    def check_status(self):
-        # print("check for: ", self.get_cell_coords())
-        if self.exit_cell == self.get_cell_coords():
-            print("Finished")
-            # success_window = tk.Toplevel(self)
-            # Label(success_window, text="Successfully found!", font="Lato 14", foreground='green',
-            #       justify='center').grid(pady=20, padx=20)
+    def check_final(self):
+        x = self.solution[-1].current_position[0]
+        y = self.solution[-1].current_position[1]
+        if (x, y) == self.exit_cell:
+            success_window = tk.Toplevel(self)
+            Label(success_window, text="Successfully found!", font="Lato 14", foreground='green',
+                  justify='center').grid(pady=20, padx=20)
+        elif self.choosen_algorithm.get() == "bidirectional":
+            success_window = tk.Toplevel(self)
+            Label(success_window, text="The paths have met!", font="Lato 14", foreground='green',
+                  justify='center').grid(pady=20, padx=20)
+        else:
+            success_window = tk.Toplevel(self)
+            Label(success_window, text="Found a partial path!", font="Lato 14", foreground='green',
+                  justify='center').grid(pady=20, padx=20)
 
     def get_color(self, x):
         if x == 1:
@@ -274,6 +267,4 @@ class MazeInterface(tk.Frame):
 
 if __name__ == '__main__':
     app = MainApp()
-    # app.start()
-    # app.master.title('Maze game')
     app.mainloop()
