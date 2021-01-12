@@ -65,6 +65,9 @@ class MazeInterface(tk.Frame):
         self.exit_cell = None
         self.cell = None
         self.canvas = None
+        self.common_cell = None
+        self.solution = None
+        self.keep_path = False
         self.size = size
         self.color = 'black'
         self.master.geometry("")
@@ -93,12 +96,16 @@ class MazeInterface(tk.Frame):
         self.button_draw = Button(self, text="Draw maze", style='W.TButton', command=self.draw_maze)
         self.button_draw.grid(row=0, column=4, pady=20, padx=20)
 
+        self.button_show_path = Button(self, text="Keep path", style='W.TButton', command=lambda: self.keep_solution())
+        self.button_show_path.grid(row=1, column=0, pady=20, padx=20)
         self.button_wall = Button(self, text="Select wall", style='W.TButton', command=lambda: self.get_color(1))
         self.button_wall.grid(row=1, column=1, pady=20, padx=20)
         self.button_start = Button(self, text="Select start", style='W.TButton', command=lambda: self.get_color(2))
         self.button_start.grid(row=1, column=2, pady=20, padx=20)
         self.button_exit = Button(self, text="Select exit", style='W.TButton', command=lambda: self.get_color(3))
         self.button_exit.grid(row=1, column=3, pady=20, padx=20)
+        self.button_clear = Button(self, text="Clear solution", style='W.TButton', command=lambda: self.clear_path())
+        self.button_clear.grid(row=1, column=4, pady=20, padx=20)
 
         self.choosen_algorithm = tk.StringVar(self)
         self.choosen_algorithm.set("BKT")
@@ -166,7 +173,7 @@ class MazeInterface(tk.Frame):
                 if self.cell:
                     self.canvas.delete(self.cell)
                 self.cell = self.start_cell
-                self.canvas.itemconfigure(self.cell, fill="grey")
+                self.canvas.itemconfigure(self.cell, fill="#c1c4c9", width=1)
         elif self.maze[row][col] == 1:
             self.canvas.itemconfigure(cell_number, fill='white', width=1)
             self.maze[row][col] = 0
@@ -175,46 +182,64 @@ class MazeInterface(tk.Frame):
         problem = MazeState(self.maze_height, self.maze_width, self.start_cell, self.start_cell, self.exit_cell,
                             self.maze)
         ps = ProblemSolver(problem)
-        solution = getattr(ps, self.choosen_algorithm.get())()
+        self.solution = getattr(ps, self.choosen_algorithm.get())()
+        solution = self.solution
         if not solution:
             print("nu")
             failure_window = tk.Toplevel(self)
             Label(failure_window, text="No solution found!", font="Lato 14", foreground='red', justify='center').grid(
                 pady=20, padx=20)
         else:
-            if self.choosen_algorithm.get() == "bidirectional" and False:
-                x = solution[0].current_position[0]
-                y = solution[0].current_position[1]
+            if self.common_cell:
+                common_item_id = self.common_cell[0] * self.maze_width + self.common_cell[1] + 1
+                self.canvas.itemconfigure(common_item_id, fill="white")
+            if self.choosen_algorithm.get() == "bidirectional":
+                x = solution[-1].current_position[0]
+                y = solution[-1].current_position[1]
                 print("bidirectional:", x, y)
-                self.canvas.itemconfigure(x * self.maze_width + y + 1, fill="blue")
-                for list in solution[1]:
-                    print("start")
-                    # self.canvas.delete(self.cell)
-                    for state in list:
-                        print(state.current_position)
-                        self.move_cell(state.current_position[0], state.current_position[1])
-                        # if state.current_position == solution[-1][-1].current_position:
-                        #     self.canvas.itemconfigure(self.cell, fill="blue")
-            else:
-                for state in solution:
-                    print(state.current_position)
-                    self.move_cell(state.current_position[0], state.current_position[1])
-            success_window = tk.Toplevel(self)
-            Label(success_window, text="Successfully found!", font="Lato 14", foreground='green',
-                  justify='center').grid(pady=20, padx=20)
+                self.common_cell = (x, y)
+                common_item_id = x * self.maze_width + y + 1
+                self.canvas.itemconfigure(common_item_id, fill="blue")
+
+            for state in solution:
+                print(state.current_position)
+                self.move_cell(state.current_position[0], state.current_position[1])
 
     def move_cell(self, row, col):
-        self.canvas.delete(self.cell)
-        x0 = col * self.size
-        y0 = row * self.size
-        x1 = x0 + self.size
-        y1 = y0 + self.size
-        self.cell = self.canvas.create_rectangle(x0, y0, x1, y1, width=0, fill='grey')
+        # if not self.keep_path:
+        #     self.canvas.itemconfigure(self.cell, width=1, fill='white')
+        # x0 = col * self.size
+        # y0 = row * self.size
+        # x1 = x0 + self.size
+        # y1 = y0 + self.size
+        if not self.keep_path and self.cell != self.start_cell:
+            self.canvas.itemconfigure(self.cell, width=1, fill='white')
+        if (row, col) != self.start_cell and (row, col) != self.exit_cell and (row, col) != self.common_cell:
 
-        self.update()
-        time.sleep(.5)
+            self.cell = row * self.maze_width + col + 1
+            self.canvas.itemconfigure(self.cell, width=1, fill='#c1c4c9')
+            # self.cell = self.canvas.create_rectangle(x0, y0, x1, y1, width=1, fill='#c1c4c9')
 
-        self.check_status()
+            self.update()
+            time.sleep(.5)
+            self.check_status()
+
+    def clear_path(self):
+        if not self.solution:
+            print("nu")
+            failure_window = tk.Toplevel(self)
+            Label(failure_window, text="No path found!", font="Lato 14", foreground='red', justify='center').grid(
+                pady=20, padx=20)
+        else:
+            for state in self.solution:
+                row = state.current_position[0]
+                col = state.current_position[1]
+                if (row, col) != self.start_cell and (row, col) != self.exit_cell and (row, col) != self.common_cell:
+                    self.cell = row * self.maze_width + col + 1
+                    self.canvas.itemconfigure(self.cell, width=1, fill='white')
+
+    def keep_solution(self):
+        self.keep_path = not self.keep_path
 
     def get_cell_coords(self):
         position = self.canvas.coords(self.cell)
@@ -226,6 +251,9 @@ class MazeInterface(tk.Frame):
         # print("check for: ", self.get_cell_coords())
         if self.exit_cell == self.get_cell_coords():
             print("Finished")
+            # success_window = tk.Toplevel(self)
+            # Label(success_window, text="Successfully found!", font="Lato 14", foreground='green',
+            #       justify='center').grid(pady=20, padx=20)
 
     def get_color(self, x):
         if x == 1:
