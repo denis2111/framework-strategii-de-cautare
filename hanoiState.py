@@ -42,6 +42,12 @@ class HanoiState(ProblemState):
                 result[piece_tower] = piece_size
         return result
 
+    def __eq__(self, other):
+        for i in range(len(self.representation)):
+            if self.representation[i] != other.representation[i]:
+                return False
+        return True
+
     def get_next_states(self):
         tower_tops = self.get_tower_tops()
         tops = list(tower_tops.values())
@@ -63,8 +69,8 @@ class HanoiState(ProblemState):
 if __name__ == '__main__':
     from problemSolver import ProblemSolver
 
-    # state = HanoiState(3, 6, [3, 3, 3, 2, 2, 1])
-    state = HanoiState(2, 6, [1, 1, 1, 1, 1, 2])
+    state = HanoiState(3, 6, [3, 3, 3, 2, 2, 1])
+    # state = HanoiState(3, 6, [1, 1, 1, 1, 2, 3])
     # print(state.is_final_state())
     ps = ProblemSolver(state)
     solution = ps.BKT()
