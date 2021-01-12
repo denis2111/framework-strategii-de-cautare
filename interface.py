@@ -58,7 +58,7 @@ class MazeInterface(tk.Frame):
     3 - start
     """
 
-    def __init__(self, master, size=35):
+    def __init__(self, master, size=20):
         tk.Frame.__init__(self, master)
         self.master = master
         self.start_cell = None
@@ -85,12 +85,12 @@ class MazeInterface(tk.Frame):
         self.width_label = Label(self, text="Width:", style='W.TLabel')
         self.width_label.grid(row=0, column=0)
         self.width_entry = tk.Entry(self)
-        self.width_entry.insert(0, '13')
+        self.width_entry.insert(0, '20')
         self.width_entry.grid(row=0, column=1)
         self.height_label = Label(self, text="Height:", style='W.TLabel')
         self.height_label.grid(row=0, column=2)
         self.height_entry = tk.Entry(self)
-        self.height_entry.insert(0, '13')
+        self.height_entry.insert(0, '20')
         self.height_entry.grid(row=0, column=3)
 
         self.button_draw = Button(self, text="Draw maze", style='W.TButton', command=self.draw_maze)
@@ -113,12 +113,15 @@ class MazeInterface(tk.Frame):
                                        "greedy", "hill_climbing")
         self.algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground='#2980b9')
         self.algorithm.grid(row=3, column=2)
+        self.heuristic_function_button = Button(self, style='W.TButton', text="Heuristic function",
+                                                command=lambda: self.heuristic_window())
+        self.heuristic_function_button.grid(row=3, column=3, pady=20, padx=20)
         self.back_button = Button(self, style='W.TButton', text="Back", command=lambda: self.master.switch_frame(Menu))
         self.back_button.grid(row=4, column=0, pady=20, padx=20)
         self.button_play = Button(self, style='W.TButton', text="Play", command=self.play)
         self.button_play.grid(row=4, column=2, pady=20, padx=20)
         self.button_stop = Button(self, style='W.TButton', text="Stop", command=self.stop)
-        self.button_stop.grid(row=4, column=3, pady=20, padx=20)
+        self.button_stop.grid(row=4, column=4, pady=20, padx=20)
 
         self.draw_maze()
 
@@ -151,7 +154,7 @@ class MazeInterface(tk.Frame):
         else:
             row = cell_number // self.maze_width
             col = cell_number % self.maze_width - 1
-        print("clicked", row, col)
+        # print("clicked", row, col)
         if self.maze[row][col] == 0:
             self.canvas.itemconfigure(cell_number, fill=self.color, width=0)
             if self.color == 'black':
@@ -255,6 +258,22 @@ class MazeInterface(tk.Frame):
             self.color = 'green'
         else:
             self.color = 'white'
+
+    def heuristic_window(self):
+        heuristic = tk.Toplevel(self)
+        heuristic.geometry("450x400")
+
+        Label(heuristic, text="Enter a heuristic function!", font="Lato 14", foreground='green', justify='center').grid(
+            pady=20, padx=20)
+        T = tk.Text(heuristic, height=15, width=50, font="Lato 12")
+        T.insert(tk.END, "Ex: |x1 - x2| + |y1 - y2|")
+        T.grid()
+
+        self.send_button = Button(heuristic, style='W.TButton', text="Send formula", command=lambda: self.send_formula(T))
+        self.send_button.grid(pady=20, padx=20)
+
+    def send_formula(self, T):
+        print(T.get("1.0", "end-1c"))
 
     def create_styles(self):
         style = Style()
