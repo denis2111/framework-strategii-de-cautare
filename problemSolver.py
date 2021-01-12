@@ -8,7 +8,7 @@ class ProblemSolver:
     def __init__(self, problem: ProblemState):
         self.problem = problem
 
-# uninformed
+    # uninformed
     def random(self, problem=None, visited_states=None):
         if problem is None:
             problem = self.problem
@@ -99,12 +99,12 @@ class ProblemSolver:
                         continue
 
                     if state in visited_states:
-                        return visited_states + reversed_visited_states
+                        return state, (visited_states, reversed_visited_states)
 
                     reversed_visited_states.append(state)
                     reversed_states_queue.append(state)
 
-        return visited_states + reversed_visited_states
+        return problem, (visited_states, reversed_visited_states)
 
     def BFS(self):
         problem = self.problem
@@ -126,7 +126,7 @@ class ProblemSolver:
 
         return visited_states
 
-# informed
+    # informed
     def hill_climbing(self):
         problem = self.problem
 
