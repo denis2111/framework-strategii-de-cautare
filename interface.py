@@ -65,9 +65,9 @@ class MazeInterface(tk.Frame):
         self.exit_cell = None
         self.cell = None
         self.canvas = None
-        self.common_cell = None
         self.solution = None
         self.keep_path = False
+        self.stop_play = False
         self.size = size
         self.color = 'black'
         self.master.geometry("")
@@ -96,7 +96,7 @@ class MazeInterface(tk.Frame):
         self.button_draw = Button(self, text="Draw maze", style='W.TButton', command=self.draw_maze)
         self.button_draw.grid(row=0, column=4, pady=20, padx=20)
 
-        self.button_show_path = Button(self, text="Keep path", style='W.TButton', command=lambda: self.keep_solution())
+        self.button_show_path = Button(self, text="Show path", style='W.TButton', command=lambda: self.keep_solution())
         self.button_show_path.grid(row=1, column=0, pady=20, padx=20)
         self.button_wall = Button(self, text="Select wall", style='W.TButton', command=lambda: self.get_color(1))
         self.button_wall.grid(row=1, column=1, pady=20, padx=20)
@@ -104,7 +104,7 @@ class MazeInterface(tk.Frame):
         self.button_start.grid(row=1, column=2, pady=20, padx=20)
         self.button_exit = Button(self, text="Select exit", style='W.TButton', command=lambda: self.get_color(3))
         self.button_exit.grid(row=1, column=3, pady=20, padx=20)
-        self.button_clear = Button(self, text="Clear solution", style='W.TButton', command=lambda: self.clear_path())
+        self.button_clear = Button(self, text="Clear path", style='W.TButton', command=lambda: self.clear_path())
         self.button_clear.grid(row=1, column=4, pady=20, padx=20)
 
         self.choosen_algorithm = tk.StringVar(self)
@@ -117,6 +117,8 @@ class MazeInterface(tk.Frame):
         self.back_button.grid(row=4, column=0, pady=20, padx=20)
         self.button_play = Button(self, style='W.TButton', text="Play", command=self.play)
         self.button_play.grid(row=4, column=2, pady=20, padx=20)
+        self.button_stop = Button(self, style='W.TButton', text="Stop", command=self.stop)
+        self.button_stop.grid(row=4, column=3, pady=20, padx=20)
 
         self.draw_maze()
 
@@ -161,8 +163,6 @@ class MazeInterface(tk.Frame):
                     self.canvas.itemconfigure(ci, fill='white', width=1)
                 self.maze[row][col] = 2  # exit
                 self.exit_cell = (row, col)
-                if self.cell:
-                    self.canvas.itemconfigure(self.cell, fill='white', width=1)
             elif self.color == 'red':
                 if self.start_cell:
                     self.maze[self.start_cell[0]][self.start_cell[1]] = 0
@@ -170,15 +170,16 @@ class MazeInterface(tk.Frame):
                     self.canvas.itemconfigure(ci, fill='white', width=1)
                 self.maze[row][col] = 3  # start
                 self.start_cell = (row, col)
-                if self.cell:
-                    self.canvas.itemconfigure(self.cell, fill='white', width=1)
                 self.cell = self.start_cell
-                self.canvas.itemconfigure(self.cell, fill="#c1c4c9", width=1)
         elif self.maze[row][col] == 1:
             self.canvas.itemconfigure(cell_number, fill='white', width=1)
             self.maze[row][col] = 0
 
     def play(self):
+        if self.stop_play:
+            self.stop()
+        self.clear_path()
+        self.canvas.tag_unbind("cell", "<Button-1>")
         problem = MazeState(self.maze_height, self.maze_width, self.start_cell, self.start_cell, self.exit_cell,
                             self.maze)
         ps = ProblemSolver(problem)
@@ -190,47 +191,44 @@ class MazeInterface(tk.Frame):
             Label(failure_window, text="No solution found!", font="Lato 14", foreground='red', justify='center').grid(
                 pady=20, padx=20)
         else:
-            if self.common_cell:
-                common_item_id = self.common_cell[0] * self.maze_width + self.common_cell[1] + 1
-                self.canvas.itemconfigure(common_item_id, fill="white")
-            if self.choosen_algorithm.get() == "bidirectional":
-                x = solution[-1].current_position[0]
-                y = solution[-1].current_position[1]
-                self.common_cell = (x, y)
-                common_item_id = x * self.maze_width + y + 1
-                self.canvas.itemconfigure(common_item_id, fill="blue")
-
             for state in solution:
+                if self.stop_play:
+                    break
                 print(state.current_position)
                 self.move_cell(state.current_position[0], state.current_position[1])
-            self.check_final()
+            if not self.stop_play:
+                self.check_final()
+        self.canvas.tag_bind("cell", "<Button-1>", self.clicked)
 
     def move_cell(self, row, col):
         if not self.keep_path and self.cell != self.start_cell:
             self.canvas.itemconfigure(self.cell, width=1, fill='white')
-        if (row, col) != self.start_cell and (row, col) != self.exit_cell and (row, col) != self.common_cell:
+        if (row, col) != self.start_cell and (row, col) != self.exit_cell:
             self.cell = row * self.maze_width + col + 1
-            self.canvas.itemconfigure(self.cell, width=1, fill='#c1c4c9')
+            if self.choosen_algorithm.get() == "bidirectional":
+                if self.canvas.itemcget(self.cell, 'fill') == "#c1c4c9":
+                    self.canvas.itemconfigure(self.cell, width=1, fill='blue')
+                else:
+                    self.canvas.itemconfigure(self.cell, width=1, fill='#c1c4c9')
+            else:
+                self.canvas.itemconfigure(self.cell, width=1, fill='#c1c4c9')
             self.update()
             time.sleep(.5)
-            # self.check_status()
+
+    def stop(self):
+        self.stop_play = not self.stop_play
 
     def clear_path(self):
-        if not self.solution:
-            print("nu")
-            failure_window = tk.Toplevel(self)
-            Label(failure_window, text="No path found!", font="Lato 14", foreground='red', justify='center').grid(
-                pady=20, padx=20)
-        else:
-            for state in self.solution:
-                row = state.current_position[0]
-                col = state.current_position[1]
-                if (row, col) != self.start_cell and (row, col) != self.exit_cell and (row, col) != self.common_cell:
-                    self.cell = row * self.maze_width + col + 1
-                    self.canvas.itemconfigure(self.cell, width=1, fill='white')
+        for i in range(self.maze_width * self.maze_height):
+            if self.canvas.itemcget(i, 'fill') == "#c1c4c9" or self.canvas.itemcget(i, 'fill') == "blue":
+                self.canvas.itemconfigure(i, width=1, fill='white')
 
     def keep_solution(self):
         self.keep_path = not self.keep_path
+        if self.keep_path:
+            self.button_show_path.config(text="Hide path")
+        else:
+            self.button_show_path.config(text="Show path")
 
     def check_final(self):
         x = self.solution[-1].current_position[0]
