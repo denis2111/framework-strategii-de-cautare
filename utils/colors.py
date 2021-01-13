@@ -1,0 +1,8 @@
+START = "red"
+FINISH = "green"
+VISITED = "#c1c4c9"
+SOLUTION = "#a366ed"
+COMMON = "blue"
+WALL = "black"
+CLEAR = "white"
+APP = "#2980b9"

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter.ttk import *
 import time
+import utils.colors as color
 
 from problemSolver import ProblemSolver
 from mazeState import MazeState
@@ -45,9 +46,9 @@ class Menu(tk.Frame):
 
     def create_styles(self):
         style = Style()
-        style.configure('W.TButton', font=('Lato', 12, 'bold'), background='#2980b9', foreground='#2980b9')
+        style.configure('W.TButton', font=('Lato', 12, 'bold'), background=color.APP, foreground=color.APP)
         style.configure('W.TButton', padding=4, borderwidth=10)
-        style.configure('W.TLabel', font=('Lato', 14, 'bold'), foreground='#2980b9', wraplength='250', justify='center')
+        style.configure('W.TLabel', font=('Lato', 14, 'bold'), foreground=color.APP, wraplength='250', justify='center')
 
 
 class MazeInterface(tk.Frame):
@@ -68,8 +69,10 @@ class MazeInterface(tk.Frame):
         self.solution = None
         self.keep_path = False
         self.stop_play = False
+        self.algorithm = None
+        self.ps = None
         self.size = size
-        self.color = 'black'
+        self.color = color.WALL
         self.master.geometry("")
         self.start()
 
@@ -111,7 +114,7 @@ class MazeInterface(tk.Frame):
         self.choosen_algorithm.set("BKT")
         self.algorithm = tk.OptionMenu(self, self.choosen_algorithm, "BKT", "BFS", "DFS", "random", "bidirectional",
                                        "greedy", "hill_climbing")
-        self.algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground='#2980b9')
+        self.algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
         self.algorithm.grid(row=3, column=2)
         self.heuristic_function_button = Button(self, style='W.TButton', text="Heuristic function",
                                                 command=lambda: self.heuristic_window())
@@ -142,7 +145,7 @@ class MazeInterface(tk.Frame):
                 y0 = i * self.size
                 x1 = x0 + self.size
                 y1 = y0 + self.size
-                self.canvas.create_rectangle(x0, y0, x1, y1, width=1, tags="cell", fill="white", outline="#2980b9")
+                self.canvas.create_rectangle(x0, y0, x1, y1, width=1, tags="cell", fill=color.CLEAR, outline=color.APP)
         self.canvas.tag_bind("cell", "<Button-1>", self.clicked)
 
     def clicked(self, event):
@@ -157,25 +160,25 @@ class MazeInterface(tk.Frame):
         # print("clicked", row, col)
         if self.maze[row][col] == 0:
             self.canvas.itemconfigure(cell_number, fill=self.color, width=0)
-            if self.color == 'black':
+            if self.color == color.WALL:
                 self.maze[row][col] = 1
-            elif self.color == 'green':
+            elif self.color == color.FINISH:
                 if self.exit_cell:
                     self.maze[self.exit_cell[0]][self.exit_cell[1]] = 0
                     ci = self.exit_cell[0] * self.maze_width + self.exit_cell[1] + 1
-                    self.canvas.itemconfigure(ci, fill='white', width=1)
+                    self.canvas.itemconfigure(ci, fill=color.CLEAR, width=1)
                 self.maze[row][col] = 2  # exit
                 self.exit_cell = (row, col)
-            elif self.color == 'red':
+            elif self.color == color.START:
                 if self.start_cell:
                     self.maze[self.start_cell[0]][self.start_cell[1]] = 0
                     ci = self.start_cell[0] * self.maze_width + self.start_cell[1] + 1
-                    self.canvas.itemconfigure(ci, fill='white', width=1)
+                    self.canvas.itemconfigure(ci, fill=color.CLEAR, width=1)
                 self.maze[row][col] = 3  # start
                 self.start_cell = (row, col)
                 self.cell = self.start_cell
         elif self.maze[row][col] == 1:
-            self.canvas.itemconfigure(cell_number, fill='white', width=1)
+            self.canvas.itemconfigure(cell_number, fill=color.CLEAR, width=1)
             self.maze[row][col] = 0
 
     def play(self):
@@ -184,42 +187,77 @@ class MazeInterface(tk.Frame):
         self.clear_path()
         problem = MazeState(self.maze_height, self.maze_width, self.start_cell, self.start_cell, self.exit_cell,
                             self.maze)
-        ps = ProblemSolver(problem)
+        self.ps = ProblemSolver(problem)
         self.algorithm = self.choosen_algorithm.get()
-        self.solution = getattr(ps, self.choosen_algorithm.get())()
         self.algorithm_play()
 
     def algorithm_play(self):
         self.canvas.tag_unbind("cell", "<Button-1>")
         if self.algorithm == "BKT":
+            self.solution = self.ps.BKT()
             self.BKT_play()
+        elif self.algorithm == "DFS":
+            self.solution = self.ps.DFS()
+            self.DFS_BFS_play()
+        elif self.algorithm == "BFS":
+            self.solution = self.ps.BFS()
+            self.DFS_BFS_play()
 
         if not self.stop_play:
             self.check_final()
         self.canvas.tag_bind("cell", "<Button-1>", self.clicked)
 
     def BKT_play(self):
-        # print(1)
         solution = self.solution
-        print("solution:", solution)
-        for state in solution["visited_states"]:
+        if solution["solution_found"]:
+            visited_states = solution["visited_states"][1:-1]
+        else:
+            visited_states = solution["visited_states"][1:]
+        for state in visited_states:
             if self.stop_play:
                 break
-            print(state.current_position)
+            cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
+            if self.canvas.itemcget(cell_id, 'fill') == color.VISITED:
+                self.canvas.itemconfigure(cell_id, width=1, fill=color.CLEAR)
+            else:
+                self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
+            self.update()
+            time.sleep(.5)
+        if solution["solution_found"]:
+            self.draw_solution(solution["solution"])
+
+    def DFS_BFS_play(self):
+        solution = self.solution
+        if solution["solution_found"]:
+            visited_states = solution["visited_states"][1:-1]
+        else:
+            visited_states = solution["visited_states"][1:]
+        for state in visited_states:
+            if self.stop_play:
+                break
             self.move_cell(state.current_position[0], state.current_position[1])
+        if solution["solution_found"]:
+            self.draw_solution(solution["solution"])
+
+    def draw_solution(self, solution_states):
+        for state in solution_states[1:-1]:
+            # if self.stop_play:
+            #     break
+            cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
+            self.canvas.itemconfigure(cell_id, width=1, fill=color.SOLUTION)
 
     def move_cell(self, row, col):
         if not self.keep_path and self.cell != self.start_cell:
-            self.canvas.itemconfigure(self.cell, width=1, fill='white')
+            self.canvas.itemconfigure(self.cell, width=1, fill=color.CLEAR)
         if (row, col) != self.start_cell and (row, col) != self.exit_cell:
             self.cell = row * self.maze_width + col + 1
             if self.choosen_algorithm.get() == "bidirectional":
-                if self.canvas.itemcget(self.cell, 'fill') == "#c1c4c9":
-                    self.canvas.itemconfigure(self.cell, width=1, fill='blue')
+                if self.canvas.itemcget(self.cell, 'fill') == color.VISITED:
+                    self.canvas.itemconfigure(self.cell, width=1, fill=color.COMMON)
                 else:
-                    self.canvas.itemconfigure(self.cell, width=1, fill='#c1c4c9')
+                    self.canvas.itemconfigure(self.cell, width=1, fill=color.VISITED)
             else:
-                self.canvas.itemconfigure(self.cell, width=1, fill='#c1c4c9')
+                self.canvas.itemconfigure(self.cell, width=1, fill=color.VISITED)
             self.update()
             time.sleep(.5)
 
@@ -228,8 +266,10 @@ class MazeInterface(tk.Frame):
 
     def clear_path(self):
         for i in range(self.maze_width * self.maze_height):
-            if self.canvas.itemcget(i, 'fill') == "#c1c4c9" or self.canvas.itemcget(i, 'fill') == "blue":
-                self.canvas.itemconfigure(i, width=1, fill='white')
+            if self.canvas.itemcget(i, 'fill') == color.VISITED or \
+                    self.canvas.itemcget(i, 'fill') == color.COMMON or \
+                    self.canvas.itemcget(i, 'fill') == color.SOLUTION:
+                self.canvas.itemconfigure(i, width=1, fill=color.CLEAR)
 
     def keep_solution(self):
         self.keep_path = not self.keep_path
@@ -239,36 +279,45 @@ class MazeInterface(tk.Frame):
             self.button_show_path.config(text="Show path")
 
     def check_final(self):
-        x = self.solution[-1].current_position[0]
-        y = self.solution[-1].current_position[1]
-        if (x, y) == self.exit_cell:
+        if self.solution["solution_found"] == True:
             success_window = tk.Toplevel(self)
-            Label(success_window, text="Successfully found!", font="Lato 14", foreground='green',
-                  justify='center').grid(pady=20, padx=20)
-        elif self.choosen_algorithm.get() == "bidirectional":
-            success_window = tk.Toplevel(self)
-            Label(success_window, text="The paths have met!", font="Lato 14", foreground='green',
+            Label(success_window, text="Successfully found!", font="Lato 14", foreground=color.FINISH,
                   justify='center').grid(pady=20, padx=20)
         else:
             success_window = tk.Toplevel(self)
-            Label(success_window, text="Found a partial path!", font="Lato 14", foreground='green',
+            Label(success_window, text="Solution not found!", font="Lato 14", foreground=color.START,
                   justify='center').grid(pady=20, padx=20)
+        # x = self.solution["solution"][-1].current_position[0]
+        # y = self.solution["solution"][-1].current_position[1]
+        # if (x, y) == self.exit_cell:
+        #     success_window = tk.Toplevel(self)
+        #     Label(success_window, text="Successfully found!", font="Lato 14", foreground=color.FINISH,
+        #           justify='center').grid(pady=20, padx=20)
+        # elif self.choosen_algorithm.get() == "bidirectional":
+        #     success_window = tk.Toplevel(self)
+        #     Label(success_window, text="The paths have met!", font="Lato 14", foreground=color.FINISH,
+        #           justify='center').grid(pady=20, padx=20)
+        # else:
+        #     success_window = tk.Toplevel(self)
+        #     Label(success_window, text="Found a partial path!", font="Lato 14", foreground=color.FINISH,
+        #           justify='center').grid(pady=20, padx=20)
 
     def get_color(self, x):
         if x == 1:
-            self.color = 'black'
+            self.color = color.WALL
         elif x == 2:
-            self.color = 'red'
+            self.color = color.START
         elif x == 3:
-            self.color = 'green'
+            self.color = color.FINISH
         else:
-            self.color = 'white'
+            self.color = color.CLEAR
 
     def heuristic_window(self):
         heuristic = tk.Toplevel(self)
         heuristic.geometry("450x400")
 
-        Label(heuristic, text="Enter a heuristic function!", font="Lato 14", foreground='green', justify='center').grid(
+        Label(heuristic, text="Enter a heuristic function!", font="Lato 14", foreground=color.FINISH,
+              justify='center').grid(
             pady=20, padx=20)
         T = tk.Text(heuristic, height=15, width=50, font="Lato 12")
         T.insert(tk.END, "Ex: |x1 - x2| + |y1 - y2|")
@@ -283,9 +332,9 @@ class MazeInterface(tk.Frame):
 
     def create_styles(self):
         style = Style()
-        style.configure('W.TButton', font=('Lato', 12, 'bold'), background='#2980b9', foreground='#2980b9')
+        style.configure('W.TButton', font=('Lato', 12, 'bold'), background=color.APP, foreground=color.APP)
         style.configure('W.TButton', padding=4, borderwidth=10)
-        style.configure('W.TLabel', font=('Lato', 12, 'bold'), foreground='#2980b9')
+        style.configure('W.TLabel', font=('Lato', 12, 'bold'), foreground=color.APP)
 
 
 if __name__ == '__main__':
