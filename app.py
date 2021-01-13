@@ -36,15 +36,15 @@ maze = [
     [1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1]
 ]
 
-problem = MazeState(30, 30, (0,1), (0,1), (2, 2), maze)
+problem = MazeState(30, 30, (0,1), (0,1), (2, 4), maze)
 
 ps = ProblemSolver(problem)
 
-solution = ps.bidirectional()
+solution = ps.greedy()
 
 if not solution:
     print("nu")
 else:
-    for state in solution:
+    for state in solution["visited_states"]:
         print(state.current_position)
 
