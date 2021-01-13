@@ -71,6 +71,8 @@ class MazeInterface(tk.Frame):
         self.stop_play = False
         self.algorithm = None
         self.ps = None
+        self.heuristic_function_button = None
+        self.heuristic_formula = "abs(current_line - final_line) + abs(current_column - final_column)"
         self.size = size
         self.color = color.WALL
         self.master.geometry("")
@@ -111,12 +113,11 @@ class MazeInterface(tk.Frame):
         self.choosen_algorithm = tk.StringVar(self)
         self.choosen_algorithm.set("BKT")
         self.algorithm = tk.OptionMenu(self, self.choosen_algorithm, "BKT", "BFS", "DFS", "random", "bidirectional",
-                                       "greedy", "hill_climbing")
+                                       "greedy", "hill_climbing", command=self.algorithm_options)
+
         self.algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
         self.algorithm.grid(row=3, column=2)
-        self.heuristic_function_button = Button(self, style='W.TButton', text="Heuristic function",
-                                                command=lambda: self.heuristic_window())
-        self.heuristic_function_button.grid(row=3, column=3, pady=20, padx=20)
+
         self.back_button = Button(self, style='W.TButton', text="Back", command=lambda: self.master.switch_frame(Menu))
         self.back_button.grid(row=4, column=0, pady=20, padx=20)
         self.button_play = Button(self, style='W.TButton', text="Play", command=self.play)
@@ -125,6 +126,17 @@ class MazeInterface(tk.Frame):
         self.button_stop.grid(row=4, column=4, pady=20, padx=20)
 
         self.draw_maze()
+
+    def algorithm_options(self, event):
+        print(event)
+
+        if event == "hill_climbing" or event == "greedy":
+            self.heuristic_function_button = Button(self, style='W.TButton', text="Heuristic function",
+                                                    command=lambda: self.heuristic_window())
+            self.heuristic_function_button.grid(row=2, column=4, pady=20, padx=20)
+        else:
+            if self.heuristic_function_button:
+                self.heuristic_function_button.grid_forget()
 
     def draw_maze(self):
         if self.canvas:
@@ -184,8 +196,7 @@ class MazeInterface(tk.Frame):
             self.stop()
         self.clear_path()
         problem = MazeState(self.maze_height, self.maze_width, self.start_cell, self.start_cell, self.exit_cell,
-                            self.maze,
-                            score_function_expr="abs(current_line - final_line) + abs(current_column - final_column)")
+                            self.maze, score_function_expr=self.heuristic_formula)
         self.ps = ProblemSolver(problem)
         self.algorithm = self.choosen_algorithm.get()
         self.algorithm_play()
@@ -326,15 +337,8 @@ class MazeInterface(tk.Frame):
                     self.canvas.itemcget(i, 'fill') == color.MEMORIZED:
                 self.canvas.itemconfigure(i, width=1, fill=color.CLEAR)
 
-    def keep_solution(self):
-        self.keep_path = not self.keep_path
-        if self.keep_path:
-            self.button_show_path.config(text="Hide path")
-        else:
-            self.button_show_path.config(text="Show path")
-
     def check_final(self):
-        if self.solution["solution_found"] == True:
+        if self.solution["solution_found"]:
             success_window = tk.Toplevel(self)
             Label(success_window, text="Successfully found!", font="Lato 14", foreground=color.FINISH,
                   justify='center').grid(pady=20, padx=20)
@@ -355,21 +359,44 @@ class MazeInterface(tk.Frame):
 
     def heuristic_window(self):
         heuristic = tk.Toplevel(self)
-        heuristic.geometry("450x400")
 
         Label(heuristic, text="Enter a heuristic function!", font="Lato 14", foreground=color.FINISH,
-              justify='center').grid(
-            pady=20, padx=20)
-        T = tk.Text(heuristic, height=15, width=50, font="Lato 12")
-        T.insert(tk.END, "Ex: |x1 - x2| + |y1 - y2|")
-        T.grid()
+              justify='center').grid(row=0, column=1, pady=20, padx=20)
+        T = tk.Text(heuristic, height=15, width=60, font="Lato 12")
+        T.insert(tk.END, self.heuristic_formula)
+        T.grid(row=1, columnspan=3)
 
-        self.send_button = Button(heuristic, style='W.TButton', text="Send formula",
-                                  command=lambda: self.send_formula(T))
-        self.send_button.grid(pady=20, padx=20)
+        self.save_button = Button(heuristic, style='W.TButton', text="Save formula",
+                                  command=lambda: self.save_formula(T))
+        self.save_button.grid(row=2, column=0, pady=20, padx=10)
+        self.instruction_button = Button(heuristic, style='W.TButton', text="See instructions",
+                                         command=lambda: self.display_instructions())
+        self.instruction_button.grid(row=2, column=2, pady=20, padx=10)
 
-    def send_formula(self, T):
+    def save_formula(self, T):
         print(T.get("1.0", "end-1c"))
+        self.heuristic_formula = T.get("1.0", "end-1c")
+
+    def display_instructions(self):
+        instructions = tk.Toplevel(self)
+        # instructions.geometry("450x400")
+        Label(instructions, text="Available functions", font="Lato 14", foreground=color.FINISH,
+              justify='center').grid(row=0, columnspan=2, pady=20, padx=20)
+        default_function_list = tk.Listbox(instructions, font="Lato 12")
+        default_list = ["sqrt", "sqrt_ord", "sin", "cos", "tg", "ctg", "abs", "min", "max"]
+        costum_function_list = tk.Listbox(instructions, font="Lato 12")
+        custom_valid_functions = ["line_min", "line_max", "line_sum", "line_prod",
+                                  "matrix_min", "matrix_max", "matrix_sum", "matrix_prod", "matrix_column_index",
+                                  "matrix_line_index",
+                                  "number_of_lines", "number_of_columns", "current_line", "current_column",
+                                  "final_line", "final_column",
+                                  "start_line", "start_column", "container"]
+        for item in default_list:
+            default_function_list.insert(tk.END, item)
+        for item in custom_valid_functions:
+            costum_function_list.insert(tk.END, item)
+        default_function_list.grid(row=1, column=0, pady=20, padx=20)
+        costum_function_list.grid(row=1, column=1, pady=20, padx=20)
 
     def create_styles(self):
         style = Style()
