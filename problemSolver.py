@@ -49,7 +49,7 @@ class ProblemSolver:
             visited_states.append(next_state)
             solution.append(next_state)
             answer = self.BKT(next_state, visited_states,solution)
-            if answer:
+            if answer["solution_found"]:
                 return answer
             visited_states.append(next_state)
             solution.pop()
@@ -79,7 +79,7 @@ class ProblemSolver:
             visited_states.append(next_state)
             solution.append(next_state)
             answer = self.DFS(next_state, visited_states, solution)
-            if answer:
+            if answer["solution_found"]:
                 return answer
             visited_states.append(next_state)
             solution.pop()
