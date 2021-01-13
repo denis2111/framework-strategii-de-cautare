@@ -54,8 +54,8 @@ class MazeState(ProblemState):
     def score_function(self):
         try:
             score = compute_score(self.score_function_expr, self)
-            print(self.score_function_expr)
-            print(score)
+            # print(self.score_function_expr)
+            # print(score)
             if score == "wrong_function":
                 raise Exception()
             else:

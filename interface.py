@@ -193,19 +193,47 @@ class MazeInterface(tk.Frame):
 
     def algorithm_play(self):
         self.canvas.tag_unbind("cell", "<Button-1>")
+        self.solution = getattr(self.ps, self.algorithm)()
         if self.algorithm == "BKT":
-            self.solution = self.ps.BKT()
             self.BKT_play()
         elif self.algorithm == "DFS":
-            self.solution = self.ps.DFS()
             self.DFS_BFS_play()
         elif self.algorithm == "BFS":
-            self.solution = self.ps.BFS()
             self.DFS_BFS_play()
+        elif self.algorithm == "bidirectional":
+            self.bidirectional_play()
+        elif self.algorithm == "random":
+            self.random_play()
+        elif self.algorithm == "greedy":
+            self.greedy_hill_play()
 
         if not self.stop_play:
             self.check_final()
         self.canvas.tag_bind("cell", "<Button-1>", self.clicked)
+
+    def bidirectional_play(self):
+        solution = self.solution
+        if solution["solution_found"]:
+            visited_states = solution["visited_states"][1:-1]
+        else:
+            visited_states = solution["visited_states"][1:]
+        for state in visited_states:
+            if self.stop_play:
+                break
+            cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
+            if self.canvas.itemcget(cell_id, 'fill') != color.FINISH:
+                self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
+            self.update()
+            time.sleep(.5)
+        if solution["solution_found"]:
+            self.draw_solution(solution["solution"])
+
+    def random_play(self):
+        solution = self.solution
+        for state in solution["visited_states"]:
+            if self.stop_play:
+                break
+            self.move_cell(state.current_position[0], state.current_position[1])
 
     def BKT_play(self):
         solution = self.solution
@@ -224,7 +252,21 @@ class MazeInterface(tk.Frame):
             self.update()
             time.sleep(.5)
         if solution["solution_found"]:
-            self.draw_solution(solution["solution"])
+            self.draw_solution(solution["solution"][1:-1])
+
+    def greedy_hill_play(self):
+        solution = self.solution
+        if solution["solution_found"]:
+            visited_states = solution["visited_states"][1:-1]
+        else:
+            visited_states = solution["visited_states"][1:]
+        for state in visited_states:
+            if self.stop_play:
+                break
+            cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
+            self.canvas.itemconfigure(cell_id, width=1, fill=color.SOLUTION)
+            self.update()
+            time.sleep(.5)
 
     def DFS_BFS_play(self):
         solution = self.solution
@@ -235,12 +277,21 @@ class MazeInterface(tk.Frame):
         for state in visited_states:
             if self.stop_play:
                 break
-            self.move_cell(state.current_position[0], state.current_position[1])
+            cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
+            if self.canvas.itemcget(cell_id, 'fill') == color.VISITED:
+                self.canvas.itemconfigure(cell_id, width=1, fill=color.MEMORIZED)
+            else:
+                self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
+            self.update()
+            time.sleep(.5)
         if solution["solution_found"]:
-            self.draw_solution(solution["solution"])
+            if self.algorithm == "BFS":
+                self.draw_solution(solution["solution"][0:-1])
+            else:
+                self.draw_solution(solution["solution"][1:-1])
 
     def draw_solution(self, solution_states):
-        for state in solution_states[1:-1]:
+        for state in solution_states:
             # if self.stop_play:
             #     break
             cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
@@ -268,7 +319,8 @@ class MazeInterface(tk.Frame):
         for i in range(self.maze_width * self.maze_height):
             if self.canvas.itemcget(i, 'fill') == color.VISITED or \
                     self.canvas.itemcget(i, 'fill') == color.COMMON or \
-                    self.canvas.itemcget(i, 'fill') == color.SOLUTION:
+                    self.canvas.itemcget(i, 'fill') == color.SOLUTION or \
+                    self.canvas.itemcget(i, 'fill') == color.MEMORIZED:
                 self.canvas.itemconfigure(i, width=1, fill=color.CLEAR)
 
     def keep_solution(self):
