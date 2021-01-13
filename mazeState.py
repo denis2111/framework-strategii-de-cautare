@@ -47,7 +47,7 @@ class MazeState(ProblemState):
                                              self.start_position,
                                              (next_x, next_y),
                                              self.end_position,
-                                             self.maze))
+                                             self.maze, self.score_function_expr))
 
         return next_states
 
@@ -62,7 +62,6 @@ class MazeState(ProblemState):
                 return score
         except:
             return 0
-
 
         # # manhatan distance
         # x, y = self.current_position

@@ -84,8 +84,8 @@ def matrix_compute_score(expression: str, problem):
     current_line, current_column = problem.current_position
     final_line, final_column = problem.end_position
     start_line, start_column = problem.start_position
-    print(current_line, current_column)
-    print(final_line, final_column)
+    # print(current_line, current_column)
+    # print(final_line, final_column)
 
     container = deepcopy(problem.maze)
 

@@ -182,26 +182,31 @@ class MazeInterface(tk.Frame):
         if self.stop_play:
             self.stop()
         self.clear_path()
-        self.canvas.tag_unbind("cell", "<Button-1>")
         problem = MazeState(self.maze_height, self.maze_width, self.start_cell, self.start_cell, self.exit_cell,
                             self.maze)
         ps = ProblemSolver(problem)
+        self.algorithm = self.choosen_algorithm.get()
         self.solution = getattr(ps, self.choosen_algorithm.get())()
-        solution = self.solution
-        if not solution:
-            print("nu")
-            failure_window = tk.Toplevel(self)
-            Label(failure_window, text="No solution found!", font="Lato 14", foreground='red', justify='center').grid(
-                pady=20, padx=20)
-        else:
-            for state in solution:
-                if self.stop_play:
-                    break
-                print(state.current_position)
-                self.move_cell(state.current_position[0], state.current_position[1])
-            if not self.stop_play:
-                self.check_final()
+        self.algorithm_play()
+
+    def algorithm_play(self):
+        self.canvas.tag_unbind("cell", "<Button-1>")
+        if self.algorithm == "BKT":
+            self.BKT_play()
+
+        if not self.stop_play:
+            self.check_final()
         self.canvas.tag_bind("cell", "<Button-1>", self.clicked)
+
+    def BKT_play(self):
+        # print(1)
+        solution = self.solution
+        print("solution:", solution)
+        for state in solution["visited_states"]:
+            if self.stop_play:
+                break
+            print(state.current_position)
+            self.move_cell(state.current_position[0], state.current_position[1])
 
     def move_cell(self, row, col):
         if not self.keep_path and self.cell != self.start_cell:
@@ -269,7 +274,8 @@ class MazeInterface(tk.Frame):
         T.insert(tk.END, "Ex: |x1 - x2| + |y1 - y2|")
         T.grid()
 
-        self.send_button = Button(heuristic, style='W.TButton', text="Send formula", command=lambda: self.send_formula(T))
+        self.send_button = Button(heuristic, style='W.TButton', text="Send formula",
+                                  command=lambda: self.send_formula(T))
         self.send_button.grid(pady=20, padx=20)
 
     def send_formula(self, T):
