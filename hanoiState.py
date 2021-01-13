@@ -1,4 +1,4 @@
-from problemState import ProblemState
+from problemState import ProblemState, ProblemType
 from copy import deepcopy
 
 
@@ -64,6 +64,9 @@ class HanoiState(ProblemState):
                 next_states.append(HanoiState(self.nr_poles, self.nr_pieces, new_representation[1:]))
         print(next_states[0].representation)
         return next_states
+
+    def get_problem_type(self):
+        return ProblemType.HANOI
 
 
 if __name__ == '__main__':

@@ -1,8 +1,9 @@
-from problemState import ProblemState
+from problemState import ProblemState, ProblemType
+from utils.scoreFunction import compute_score
 
 
 class MazeState(ProblemState):
-    def __init__(self, n, m, start_position, current_position, end_position, maze):
+    def __init__(self, n, m, start_position, current_position, end_position, maze, score_function_expr="0"):
         super().__init__()
 
         self.n = n
@@ -11,6 +12,7 @@ class MazeState(ProblemState):
         self.end_position = end_position
         self.maze = maze
         self.current_position = current_position
+        self.score_function_expr = score_function_expr
 
     def __is_valid_state(self, position):
         x, y = position
@@ -50,10 +52,22 @@ class MazeState(ProblemState):
         return next_states
 
     def score_function(self):
-      # manhatan distance
-        x, y = self.current_position
-        x2, y2 = self.end_position
-        return abs(x - x2) + abs(y - y2)
+        try:
+            score = compute_score(self.score_function_expr, self)
+            print(self.score_function_expr)
+            print(score)
+            if score == "wrong_function":
+                raise Exception()
+            else:
+                return score
+        except:
+            return 0
+
+
+        # # manhatan distance
+        # x, y = self.current_position
+        # x2, y2 = self.end_position
+        # return abs(x - x2) + abs(y - y2)
 
     def get_reversed_problem(self):
         return MazeState(self.n,
@@ -62,3 +76,6 @@ class MazeState(ProblemState):
                          self.end_position,
                          self.start_position,
                          self.maze)
+
+    def get_problem_type(self):
+        return ProblemType.MAZE
