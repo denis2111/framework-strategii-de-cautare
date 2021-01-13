@@ -99,8 +99,6 @@ class MazeInterface(tk.Frame):
         self.button_draw = Button(self, text="Draw maze", style='W.TButton', command=self.draw_maze)
         self.button_draw.grid(row=0, column=4, pady=20, padx=20)
 
-        self.button_show_path = Button(self, text="Show path", style='W.TButton', command=lambda: self.keep_solution())
-        self.button_show_path.grid(row=1, column=0, pady=20, padx=20)
         self.button_wall = Button(self, text="Select wall", style='W.TButton', command=lambda: self.get_color(1))
         self.button_wall.grid(row=1, column=1, pady=20, padx=20)
         self.button_start = Button(self, text="Select start", style='W.TButton', command=lambda: self.get_color(2))
@@ -108,7 +106,7 @@ class MazeInterface(tk.Frame):
         self.button_exit = Button(self, text="Select exit", style='W.TButton', command=lambda: self.get_color(3))
         self.button_exit.grid(row=1, column=3, pady=20, padx=20)
         self.button_clear = Button(self, text="Clear path", style='W.TButton', command=lambda: self.clear_path())
-        self.button_clear.grid(row=1, column=4, pady=20, padx=20)
+        self.button_clear.grid(row=3, column=4, pady=20, padx=20)
 
         self.choosen_algorithm = tk.StringVar(self)
         self.choosen_algorithm.set("BKT")
@@ -186,7 +184,8 @@ class MazeInterface(tk.Frame):
             self.stop()
         self.clear_path()
         problem = MazeState(self.maze_height, self.maze_width, self.start_cell, self.start_cell, self.exit_cell,
-                            self.maze)
+                            self.maze,
+                            score_function_expr="abs(current_line - final_line) + abs(current_column - final_column)")
         self.ps = ProblemSolver(problem)
         self.algorithm = self.choosen_algorithm.get()
         self.algorithm_play()
@@ -205,6 +204,8 @@ class MazeInterface(tk.Frame):
         elif self.algorithm == "random":
             self.random_play()
         elif self.algorithm == "greedy":
+            self.greedy_hill_play()
+        elif self.algorithm == "hill_climbing":
             self.greedy_hill_play()
 
         if not self.stop_play:
@@ -264,9 +265,11 @@ class MazeInterface(tk.Frame):
             if self.stop_play:
                 break
             cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
-            self.canvas.itemconfigure(cell_id, width=1, fill=color.SOLUTION)
+            self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
             self.update()
             time.sleep(.5)
+        if solution["solution_found"]:
+            self.draw_solution(solution["solution"][1:-1])
 
     def DFS_BFS_play(self):
         solution = self.solution
@@ -337,22 +340,8 @@ class MazeInterface(tk.Frame):
                   justify='center').grid(pady=20, padx=20)
         else:
             success_window = tk.Toplevel(self)
-            Label(success_window, text="Solution not found!", font="Lato 14", foreground=color.START,
+            Label(success_window, text="No solution found!", font="Lato 14", foreground=color.START,
                   justify='center').grid(pady=20, padx=20)
-        # x = self.solution["solution"][-1].current_position[0]
-        # y = self.solution["solution"][-1].current_position[1]
-        # if (x, y) == self.exit_cell:
-        #     success_window = tk.Toplevel(self)
-        #     Label(success_window, text="Successfully found!", font="Lato 14", foreground=color.FINISH,
-        #           justify='center').grid(pady=20, padx=20)
-        # elif self.choosen_algorithm.get() == "bidirectional":
-        #     success_window = tk.Toplevel(self)
-        #     Label(success_window, text="The paths have met!", font="Lato 14", foreground=color.FINISH,
-        #           justify='center').grid(pady=20, padx=20)
-        # else:
-        #     success_window = tk.Toplevel(self)
-        #     Label(success_window, text="Found a partial path!", font="Lato 14", foreground=color.FINISH,
-        #           justify='center').grid(pady=20, padx=20)
 
     def get_color(self, x):
         if x == 1:
