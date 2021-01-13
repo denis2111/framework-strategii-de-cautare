@@ -54,9 +54,7 @@ class ProblemSolver:
             visited_states.append(next_state)
             solution.pop()
 
-        return {"solution_found": False,
-                "visited_states": visited_states,
-                }
+        return None
 
     def DFS(self, problem=None, visited_states=None, solution=None):
         if problem is None:
@@ -84,9 +82,7 @@ class ProblemSolver:
             visited_states.append(next_state)
             solution.pop()
 
-        return {"solution_found": False,
-                "visited_states": visited_states,
-                }
+        return None
 
     def bidirectional(self):
         problem = self.problem
