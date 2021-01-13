@@ -121,7 +121,7 @@ def matrix_compute_score(expression: str, problem):
             raise Exception
         return expression_value
     except:
-        return "wrong function"
+        return "wrong_function"
 
 
 def list_compute_score(expression: str, problem):
@@ -148,7 +148,7 @@ def list_compute_score(expression: str, problem):
             raise Exception
         return expression_value
     except:
-        return "wrong function"
+        return "wrong_function"
 
 
 def compute_score(expression, problem: ProblemState):
