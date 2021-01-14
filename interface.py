@@ -221,14 +221,15 @@ class MazeInterface(tk.Frame):
             self.maze[row][col] = 0
 
     def play(self):
-        if self.stop_play:
-            self.stop()
-        self.clear_path()
-        problem = MazeState(self.maze_height, self.maze_width, self.start_cell, self.start_cell, self.exit_cell,
-                            self.maze, score_function_expr=self.heuristic_formula)
-        self.ps = ProblemSolver(problem)
-        self.algorithm = self.choosen_algorithm.get()
-        self.algorithm_play()
+        if self.start_cell and self.exit_cell:
+            if self.stop_play:
+                self.stop()
+            self.clear_path()
+            problem = MazeState(self.maze_height, self.maze_width, self.start_cell, self.start_cell, self.exit_cell,
+                                self.maze, score_function_expr=self.heuristic_formula)
+            self.ps = ProblemSolver(problem)
+            self.algorithm = self.choosen_algorithm.get()
+            self.algorithm_play()
 
     def algorithm_play(self):
         self.canvas.tag_unbind("cell", "<Button-1>")
