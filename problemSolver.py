@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 from queue import PriorityQueue
-from random import randint
+from random import randint, randrange
+from random import random as rnd
 from typing import List
 
 from problemState import ProblemState
@@ -43,6 +44,21 @@ class ProblemSolver:
                 }
 
     def BKT(self, problem=None, visited_states=None, solution=None):
+        """
+        At each step this algorithm will choose an unvisited neighbour and continue until it reach a final state or
+        until there are no more unvisited neighbors and the algorithm will return until it can go on other path. It
+        can visit the same state more then once but in different paths.
+
+        :param problem: It is only for recursion, let is None.
+        :param visited_states: It is only for recursion, let is None.
+        :param solution: It is only for recursion, let is None.
+        :return: A dictionary with the following fields:
+                "solution_found": True if a solution was found, else False.
+                "visited_states": A list of visited states in the order of their visit. If the algorithm returns from
+                a state, it will appear for the second time in visited_states.
+                "solution": A path from the start state to a final state. If the field solution_found is False, this
+                            field will be missing.
+        """
         if problem is None:
             problem = self.problem
             visited_states = [problem]
@@ -73,6 +89,21 @@ class ProblemSolver:
                 }
 
     def DFS(self, problem=None, visited_states=None, solution=None):
+        """
+        At each step this algorithm will choose an unvisited neighbour and continue until it reach a final state or
+        until there are no more unvisited neighbors and the algorithm will return until it can go on other unvisited
+        neighbour. It will never visit the same state twice.
+
+        :param problem: It is only for recursion, let is None.
+        :param visited_states: It is only for recursion, let is None.
+        :param solution: It is only for recursion, let is None.
+        :return: A dictionary with the following fields:
+                "solution_found": True if a solution was found, else False.
+                "visited_states": A list of visited states in the order of their visit. If the algorithm returns from
+                a state, it will appear for the second time in visited_states.
+                "solution": A path from the start state to a final state. If the field solution_found is False, this
+                            field will be missing.
+        """
         if problem is None:
             problem = self.problem
             visited_states = [problem]
@@ -103,6 +134,17 @@ class ProblemSolver:
                 }
 
     def bidirectional(self):
+        """
+        It is the same with BFS but it will start to visit states from the both start state and end state in
+        the same time.
+
+        :return: A dictionary with the following fields:
+                "solution_found": True if a solution was found, else False.
+                "visited_states": A list of visited states in the order of their visit.
+                "solution": A path from the start state to a final state. If the field solution_found is False, this
+                            field will be missing.
+        :return:
+        """
         problem = self.problem
         visited_states = [problem]
         states_queue = [problem]
@@ -167,6 +209,15 @@ class ProblemSolver:
                 }
 
     def BFS(self):
+        """
+        At each step this algorithm will visit a new state which is the closest unvisited state from the start.
+
+        :return: A dictionary with the following fields:
+                "solution_found": True if a solution was found, else False.
+                "visited_states": A list of visited states in the order of their visit.
+                "solution": A path from the start state to a final state. If the field solution_found is False, this
+                            field will be missing.
+        """
         problem = self.problem
         visited_states = [problem]
         previous_states = [None]
@@ -204,13 +255,24 @@ class ProblemSolver:
         solution = []
         while current_pos:
             solution.append(visited_states[current_pos])
-            print(current_pos, visited_states[current_pos].current_position)
             current_pos = previous_states[current_pos]
         solution.reverse()
         return solution
 
     # informed
     def hill_climbing(self):
+        """
+        At each step this algorithm will visit a new state which is closer than current state to final state. If
+        there is more than one such state it will choose one at random.
+        To determine how close a state is to the final state, this algorithm will use the score_function from the
+        problem_state.
+
+        :return: A dictionary with the following fields:
+                "solution_found": True if a solution was found, else False.
+                "visited_states": A list of visited states in the order of their visit.
+                "solution": A path from the start state to a final state. If the field solution_found is False, this
+                            field will be missing.
+        """
         problem = self.problem
 
         best_global = problem.score_function()
@@ -260,7 +322,80 @@ class ProblemSolver:
         random_counter = randint(0, len(better_neighbours) - 1)
         return better_neighbours[random_counter]
 
+    @staticmethod
+    def __choose_worse(next_states: List[ProblemState], current_score):
+        worse_neighbours = []
+
+        # Selectam vecinii cu distanta cea mai mica
+        for state in next_states:
+            if state.score_function() >= current_score:
+                worse_neighbours.append(state)
+
+        # Returnam unul dintre cei mai buni vecini random si distanta
+        if not len(worse_neighbours):
+            return None
+        random_counter = randint(0, len(worse_neighbours) - 1)
+        return worse_neighbours[random_counter]
+
+    def simulated_annealing(self, steps_number=1000, cooling_function=None, start_temp=0.5):
+        """
+        This algorithm will choose a better neighbour like Hill climbing algorithm but it has a chance named temperature
+        to choose a worse neighbour.
+
+        :param steps_number: The number of steps after the algorithm will stop.
+        :param cooling_function: The function for temperature cooling, it will be called in each setp. It must
+        have one parameter temp and return the temperature after cooling.
+        :param start_temp: The start temperature value. It must be in interval [0,1]
+        :return:
+        """
+        if cooling_function is None:
+            cooling_function = (lambda x: x * 0.98)
+        problem = self.problem
+
+        path = [problem]
+
+        temp = start_temp
+        while not problem.is_final_state() and steps_number > 0:
+            next_states = problem.get_next_states()
+            if not len(next_states):
+                break
+
+            if rnd() <= temp:
+                next_state = ProblemSolver.__choose_worse(next_states, problem.score_function())
+                if next_state:
+                    problem = next_state
+                    path.append(problem)
+            else:
+                next_state = ProblemSolver.__choice(next_states, problem.score_function())
+                if next_state:
+                    problem = next_state
+                    path.append(problem)
+
+            steps_number -= 1
+            temp = cooling_function(temp)
+
+        if problem.is_final_state():
+            return {"solution_found": True,
+                    "visited_states": path,
+                    "solution": path,
+                    }
+        else:
+            return {"solution_found": False,
+                    "visited_states": path,
+                    }
+
     def greedy(self):
+        """
+        At each step this algorithm will visit a new state which is closest to the final state among all neighbours.
+        To determine how close a state is to the final state, this algorithm will use the score_function from the
+        problem_state.
+
+        :return: A dictionary with the following fields:
+                "solution_found": True if a solution was found, else False.
+                "visited_states": A list of visited states in the order of their visit.
+                "solution": A path from the start state to a final state. If the field solution_found is False, this
+                            field will be missing.
+        """
         problem = self.problem
 
         possible_states = PriorityQueue()
@@ -286,6 +421,51 @@ class ProblemSolver:
             next_states = current_state.get_next_states()
             for next_state in next_states:
                 possible_states.put(ComparableItem(next_state.score_function(), (next_state, len(visited_states) - 1)))
+
+        return {"solution_found": False,
+                "visited_states": [vs[0] for vs in visited_states],
+                }
+
+    def a_star(self):
+        """
+        At each step this algorithm will visit a new state which has the lowest value of: distance_from_start_state +
+        problem_state.score_function().
+
+        To determine how close a state is to the final state, this algorithm will use the score_function from the
+        problem_state.
+
+        :return: A dictionary with the following fields:
+                "solution_found": True if a solution was found, else False.
+                "visited_states": A list of visited states in the order of their visit.
+                "solution": A path from the start state to a final state. If the field solution_found is False, this
+                            field will be missing.
+        """
+        problem = self.problem
+
+        possible_states = PriorityQueue()
+        possible_states.put(ComparableItem(problem.score_function(), (problem, None, 0)))
+        visited_states = []
+
+        while not possible_states.empty():
+
+            # get the state with the best score from possible_states queue
+            current_state, previous_state, path_length = possible_states.get().item
+            if current_state in [vs[0] for vs in visited_states]:
+                continue
+            visited_states.append((current_state, previous_state))
+
+            if current_state.is_final_state():
+                return {"solution_found": True,
+                        "visited_states": [vs[0] for vs in visited_states],
+                        "solution": self.__get_bfs_solution([vs[0] for vs in visited_states],
+                                                            [vs[1] for vs in visited_states],
+                                                            len(visited_states) - 1),
+                        }
+
+            next_states = current_state.get_next_states()
+            for next_state in next_states:
+                possible_states.put(ComparableItem(next_state.score_function() + path_length,
+                                                   (next_state, len(visited_states) - 1, path_length + 1)))
 
         return {"solution_found": False,
                 "visited_states": [vs[0] for vs in visited_states],
