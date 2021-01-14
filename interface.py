@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter.ttk import *
 import time
 import utils.colors as color
+import json
 
 from problemSolver import ProblemSolver
 from mazeState import MazeState
@@ -121,7 +122,7 @@ class MazeInterface(tk.Frame):
 
         self.algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
         self.algorithm.grid(row=3, column=2)
-        self.button_export = Button(self, text="Export data", style='W.TButton', command=lambda: print(1))
+        self.button_export = Button(self, text="Export data", style='W.TButton', command=lambda: self.export_data())
         self.button_export.grid(row=3, column=0, pady=20, padx=20)
 
         self.back_button = Button(self, style='W.TButton', text="Back", command=lambda: self.master.switch_frame(Menu))
@@ -132,6 +133,64 @@ class MazeInterface(tk.Frame):
         self.button_stop.grid(row=4, column=4, pady=20, padx=20)
 
         self.draw_maze()
+
+    def get_states_position_list(self, states_type):
+        solution_path = []
+        alg_name = self.algorithm
+
+        if self.solution[states_type][0].current_position != self.solution[states_type][0].start_position:
+            solution_state = {"line": self.solution[states_type][0].start_position[0],
+                              "column": self.solution[states_type][0].start_position[1]}
+            if alg_name == "BKT" or alg_name == "DFS" and states_type != "solution":
+                solution_state["type"] = "forward"
+            solution_path.append(solution_state)
+
+        states_position_list = []
+        for state in self.solution[states_type]:
+            solution_state = {"line": state.current_position[0],
+                              "column": state.current_position[1]
+                              }
+            if (alg_name == "BKT" or alg_name == "DFS") and solution_path and states_type != "solution":
+                solution_state["type"] = "forward"
+                if (solution_path[-1]["line"], solution_path[-1]["column"]) == state.current_position:
+                    solution_state["type"] = "backward"
+                if state.current_position in states_position_list:
+                    solution_state["type"] = "backward"
+
+            solution_path.append(solution_state)
+            states_position_list.append(state.current_position)
+
+        return solution_path
+
+    @staticmethod
+    def get_algorithm_type(alg_name):
+        types = {"BKT": "uninformed",
+                 "DFS": "uninformed",
+                 "BFS": "uninformed",
+                 "random": "uninformed",
+                 "bidirectional": "uninformed",
+                 "greedy": "informed",
+                 "hill_climbing": "informed"}
+        return types[alg_name]
+
+    def export_data(self):
+        if self.solution:
+            data = {"problem_type": "Maze",
+                    "maze": self.solution["visited_states"][0].maze,
+                    "start_position": self.solution["visited_states"][0].start_position,
+                    "end_position": self.solution["visited_states"][0].end_position,
+                    "algorithm_type": MazeInterface.get_algorithm_type(self.algorithm),
+                    "algorithm_name": self.algorithm,
+                    "solution_found": self.solution["solution_found"]}
+            if self.solution["solution_found"]:
+                data["solution_path"] = self.get_states_position_list("solution")
+            data["visited_position"] = self.get_states_position_list("visited_states")
+            print(data)
+            json_object = json.dumps(data, indent=4)
+            json_file = open("exports/export.json", 'w')
+            json_file.write(json_object)
+        else:
+            return 0
 
     def algorithm_options(self, event):
         print(event)
