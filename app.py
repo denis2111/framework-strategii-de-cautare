@@ -41,7 +41,7 @@ problem = MazeState(30, 30, (0, 1), (0, 1), (2, 4), maze,
 
 ps = ProblemSolver(problem)
 
-solution = ps.greedy()
+solution = ps.simulated_annealing()
 
 if not solution:
     print("nu")
