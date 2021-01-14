@@ -73,6 +73,10 @@ class MazeInterface(tk.Frame):
         self.ps = None
         self.heuristic_function_button = None
         self.heuristic_formula = "abs(current_line - final_line) + abs(current_column - final_column)"
+        self.path_option = None
+        self.bkt_option = 0
+        self.random_steps_label = None
+        self.random_steps_entry = None
         self.size = size
         self.color = color.WALL
         self.master.geometry("")
@@ -107,16 +111,18 @@ class MazeInterface(tk.Frame):
         self.button_start.grid(row=1, column=2, pady=20, padx=20)
         self.button_exit = Button(self, text="Select exit", style='W.TButton', command=lambda: self.get_color(3))
         self.button_exit.grid(row=1, column=3, pady=20, padx=20)
+
         self.button_clear = Button(self, text="Clear path", style='W.TButton', command=lambda: self.clear_path())
         self.button_clear.grid(row=3, column=4, pady=20, padx=20)
-
         self.choosen_algorithm = tk.StringVar(self)
-        self.choosen_algorithm.set("BKT")
+        self.choosen_algorithm.set("DFS")
         self.algorithm = tk.OptionMenu(self, self.choosen_algorithm, "BKT", "BFS", "DFS", "random", "bidirectional",
                                        "greedy", "hill_climbing", command=self.algorithm_options)
 
         self.algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
         self.algorithm.grid(row=3, column=2)
+        self.button_export = Button(self, text="Export data", style='W.TButton', command=lambda: print(1))
+        self.button_export.grid(row=3, column=0, pady=20, padx=20)
 
         self.back_button = Button(self, style='W.TButton', text="Back", command=lambda: self.master.switch_frame(Menu))
         self.back_button.grid(row=4, column=0, pady=20, padx=20)
@@ -137,6 +143,29 @@ class MazeInterface(tk.Frame):
         else:
             if self.heuristic_function_button:
                 self.heuristic_function_button.grid_forget()
+
+        if event == "BKT":
+            self.choosen_path = tk.StringVar(self)
+            self.choosen_path.set("Any solution")
+            self.path_option = tk.OptionMenu(self, self.choosen_path, "Any solution", "Best solution")
+
+            self.path_option.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
+            self.path_option.grid(row=2, column=4, pady=20, padx=20)
+        else:
+            if self.path_option:
+                self.path_option.grid_forget()
+
+        if event == "random":
+            self.random_steps_label = Label(self, text="Number of steps:", style='W.TLabel')
+            self.random_steps_label.grid(row=2, column=4)
+            self.random_steps_entry = tk.Entry(self, width=10)
+            self.random_steps_entry.insert(0, '1000')
+            self.random_steps_entry.grid(row=2, column=5, pady=20, padx=20)
+        else:
+            if self.random_steps_label:
+                self.random_steps_label.grid_forget()
+            if self.random_steps_entry:
+                self.random_steps_entry.grid_forget()
 
     def draw_maze(self):
         if self.canvas:
@@ -203,20 +232,30 @@ class MazeInterface(tk.Frame):
 
     def algorithm_play(self):
         self.canvas.tag_unbind("cell", "<Button-1>")
-        self.solution = getattr(self.ps, self.algorithm)()
         if self.algorithm == "BKT":
+            if self.choosen_path.get() == "Any solution":
+                self.bkt_option = 0
+            else:
+                self.bkt_option = 1
+            self.solution = self.ps.BKT()
             self.BKT_play()
         elif self.algorithm == "DFS":
+            self.solution = self.ps.DFS()
             self.DFS_BFS_play()
         elif self.algorithm == "BFS":
+            self.solution = self.ps.BFS()
             self.DFS_BFS_play()
         elif self.algorithm == "bidirectional":
+            self.solution = self.ps.bidirectional()
             self.bidirectional_play()
         elif self.algorithm == "random":
+            self.solution = self.ps.random(int(self.random_steps_entry.get()))
             self.random_play()
         elif self.algorithm == "greedy":
+            self.solution = self.ps.greedy()
             self.greedy_hill_play()
         elif self.algorithm == "hill_climbing":
+            self.solution = self.ps.hill_climbing()
             self.greedy_hill_play()
 
         if not self.stop_play:
