@@ -232,6 +232,7 @@ class MazeInterface(tk.Frame):
             self.algorithm_play()
 
     def algorithm_play(self):
+        self.button_play.config(state=tk.DISABLED)
         self.canvas.tag_unbind("cell", "<Button-1>")
         if self.algorithm == "BKT":
             if self.choosen_path.get() == "Any solution":
@@ -262,6 +263,7 @@ class MazeInterface(tk.Frame):
         if not self.stop_play:
             self.check_final()
         self.canvas.tag_bind("cell", "<Button-1>", self.clicked)
+        self.button_play.config(state=tk.NORMAL)
 
     def bidirectional_play(self):
         solution = self.solution
@@ -368,6 +370,8 @@ class MazeInterface(tk.Frame):
 
     def stop(self):
         self.stop_play = not self.stop_play
+        if not self.stop_play:
+            self.button_play.config(state=tk.NORMAL)
 
     def clear_path(self):
         for i in range(self.maze_width * self.maze_height):
