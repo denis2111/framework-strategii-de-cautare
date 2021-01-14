@@ -147,9 +147,6 @@ class ProblemSolver:
                     if next_state in reversed_visited_states:
                         continue
 
-                    if next_state in visited_states:
-                        return steps_order
-
                     reversed_visited_states.append(next_state)
                     reversed_previous_states.append(reversed_visited_states.index(reversed_problem))
                     reversed_states_queue.append(next_state)
