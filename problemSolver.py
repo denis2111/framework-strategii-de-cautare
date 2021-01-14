@@ -1,3 +1,6 @@
+from dataclasses import dataclass, field
+from typing import Any
+from queue import PriorityQueue
 from random import randint
 from typing import List
 
@@ -10,6 +13,17 @@ class ProblemSolver:
 
     # uninformed
     def random(self, steps=1000):
+        """
+        At each step this algorithm will choose a neighbour at random and will make the transition to it.
+
+        :param steps: Number of steps the algorithm will do. If this number of steps is reached and a solution
+        wasn't found, the algorithm will stop.
+        :return: A dictionary with the following fields:
+                "solution_found": True if a solution was found, else False.
+                "visited_states": A list of visited states in the order of their visit.
+                "solution": A path from the start state to a final state. If the field solution_found is False, this
+                            field will be missing.
+        """
         problem = self.problem
         visited_states = [problem]
 
@@ -193,6 +207,7 @@ class ProblemSolver:
         solution = []
         while current_pos:
             solution.append(visited_states[current_pos])
+            print(current_pos, visited_states[current_pos].current_position)
             current_pos = previous_states[current_pos]
         solution.reverse()
         return solution
@@ -251,32 +266,32 @@ class ProblemSolver:
     def greedy(self):
         problem = self.problem
 
-        best_global = problem.score_function()
-        path = [problem]
+        possible_states = PriorityQueue()
+        possible_states.put(ComparableItem(problem.score_function(), (problem, None)))
+        visited_states = []
 
-        while not problem.is_final_state():
-            next_states = problem.get_next_states()
+        while not possible_states.empty():
 
-            if len(next_states) == 0:
-                return {"solution_found": False,
-                        "visited_states": path,
+            # get the state with the best score from possible_states queue
+            current_state, previous_state = possible_states.get().item
+            if current_state in [vs[0] for vs in visited_states]:
+                continue
+            visited_states.append((current_state, previous_state))
+
+            if current_state.is_final_state():
+                return {"solution_found": True,
+                        "visited_states": [vs[0] for vs in visited_states],
+                        "solution": self.__get_bfs_solution([vs[0] for vs in visited_states],
+                                                            [vs[1] for vs in visited_states],
+                                                            len(visited_states) - 1),
                         }
 
-            next_state = ProblemSolver.__best_choice(next_states)
-            best_local = next_state.score_function()
+            next_states = current_state.get_next_states()
+            for next_state in next_states:
+                possible_states.put(ComparableItem(next_state.score_function(), (next_state, len(visited_states) - 1)))
 
-            if best_local > best_global:
-                return {"solution_found": False,
-                        "visited_states": path,
-                        }
-            else:
-                best_global = best_local
-                problem = next_state
-                path.append(problem)
-
-        return {"solution_found": True,
-                "visited_states": path,
-                "solution": path,
+        return {"solution_found": False,
+                "visited_states": [vs[0] for vs in visited_states],
                 }
 
     @staticmethod
@@ -299,3 +314,9 @@ class ProblemSolver:
         # Returnam unul dintre cei mai buni vecini random si distanta
         random_counter = randint(0, len(better_neighbours) - 1)
         return better_neighbours[random_counter]
+
+
+@dataclass(order=True)
+class ComparableItem:
+    priority: int
+    item: Any=field(compare=False)
