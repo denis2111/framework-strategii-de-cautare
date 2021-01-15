@@ -627,7 +627,7 @@ class HanoiInterface(tk.Frame):
                                                command=self.algorithm_options)
         self.choosen_algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
         self.choosen_algorithm.place(relx=0.3, rely=0.15)
-        self.alg_name = None
+        self.alg_name = "DFS"
         self.heuristic_function_button = None
         self.button_export = Button(self, text="Export data", style='W.TButton', command=lambda: self.export_data())
         self.button_export.place(relx=0.05, rely=0.15)
