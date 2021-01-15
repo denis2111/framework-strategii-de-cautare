@@ -589,6 +589,7 @@ class HanoiInterface(tk.Frame):
     def __init__(self, master, size=35):
         tk.Frame.__init__(self, master)
         tk.Frame.config(self, width=550, height=550)
+        self.heuristic_formula = "abs(current_line - final_line) + abs(current_column - final_column)"
         self.representation = None
         self.pieces_label = tk.Label(self, text="Nr of Pieces:", font=('Helvetica', 15))
         self.pieces_label.place(relx=0.05, rely=0.05)
@@ -617,7 +618,72 @@ class HanoiInterface(tk.Frame):
 
         self.menu_button = Button(self, style='W.TButton', text="Back", command=lambda: self.master.switch_frame(Menu))
         self.menu_button.place(relx=0.11, rely=0.8)
+
+        self.choosen_algorithm_text = tk.StringVar(self)
+        self.choosen_algorithm_text.set("DFS")
+        self.choosen_algorithm = tk.OptionMenu(self, self.choosen_algorithm_text, "BKT", "BFS", "DFS", "random",
+                                               "bidirectional",
+                                               "greedy", "hill_climbing", "A*", "simulated_annealing",
+                                               command=self.algorithm_options)
+        self.choosen_algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
+        self.choosen_algorithm.place(relx=0.3, rely=0.15)
+        self.alg_name = None
+        self.heuristic_function_button = None
+        self.button_export = Button(self, text="Export data", style='W.TButton', command=lambda: self.export_data())
+        self.button_export.place(relx=0.05, rely=0.15)
+        self.solution_dict = None
         # self.start_drawing()
+
+    def display_instructions(self):
+        instructions = tk.Toplevel(self)
+        # instructions.geometry("450x400")
+        Label(instructions, text="Available functions", font="Lato 14", foreground=color.FINISH,
+              justify='center').grid(row=0, columnspan=2, pady=20, padx=20)
+        default_function_list = tk.Listbox(instructions, font="Lato 12")
+        default_list = ["sqrt", "sqrt_ord", "sin", "cos", "tg", "ctg", "abs", "min", "max"]
+        costum_function_list = tk.Listbox(instructions, font="Lato 12")
+        custom_valid_functions = ["list_min", "list_max", "list_sum", "list_prod",
+                                  "number_of_poles", "number_of_pieces", "container"
+                                 ]
+        for item in default_list:
+            default_function_list.insert(tk.END, item)
+        for item in custom_valid_functions:
+            costum_function_list.insert(tk.END, item)
+        default_function_list.grid(row=1, column=0, pady=20, padx=20)
+        costum_function_list.grid(row=1, column=1, pady=20, padx=20)
+
+    def save_formula(self, T):
+        print(T.get("1.0", "end-1c"))
+        self.heuristic_formula = T.get("1.0", "end-1c")
+
+    def heuristic_window(self):
+        heuristic = tk.Toplevel(self)
+
+        Label(heuristic, text="Enter a heuristic function!", font="Lato 14", foreground=color.FINISH,
+              justify='center').grid(row=0, column=1, pady=20, padx=20)
+        T = tk.Text(heuristic, height=15, width=60, font="Lato 12")
+        T.insert(tk.END, self.heuristic_formula)
+        T.grid(row=1, columnspan=3)
+
+        self.save_button = Button(heuristic, style='W.TButton', text="Save formula",
+                                  command=lambda: self.save_formula(T))
+        self.save_button.grid(row=2, column=0, pady=20, padx=10)
+        self.instruction_button = Button(heuristic, style='W.TButton', text="See instructions",
+                                         command=lambda: self.display_instructions())
+        self.instruction_button.grid(row=2, column=2, pady=20, padx=10)
+
+    def algorithm_options(self, event):
+        print(event)
+        self.alg_name = event
+        if event == "hill_climbing" or event == "greedy" or event == "A*" or event == "simulated_annealing":
+            if self.heuristic_function_button is None:
+                self.heuristic_function_button = Button(self, style='W.TButton', text="Heuristic function",
+                                                        command=lambda: self.heuristic_window())
+                self.heuristic_function_button.place(relx=0.65, rely=0.8)
+        else:
+            if self.heuristic_function_button:
+                self.heuristic_function_button.place_forget()
+                self.heuristic_function_button = None
 
     def get_solution(self):
         nr_pieces = int(self.pieces_input.get())
@@ -625,7 +691,28 @@ class HanoiInterface(tk.Frame):
         initial_tower = int(self.initial_tower_input.get())
         state = HanoiState(nr_towers, nr_pieces, initial_tower)
         ps = ProblemSolver(state)
-        solution = ps.BKT()['visited_states']
+        print(self.alg_name)
+        if self.alg_name == "BKT":
+            self.solution_dict = ps.BKT()
+        if self.alg_name == "DFS":
+            self.solution_dict = ps.DFS()
+        if self.alg_name == "BFS":
+            self.solution_dict = ps.BFS()
+        if self.alg_name == "bidirectional":
+            self.solution_dict = ps.bidirectional()
+        if self.alg_name == "hill_climbing":
+            self.solution_dict = ps.hill_climbing()
+        if self.alg_name == "simulated_annealing":
+            self.solution_dict = ps.simulated_annealing()
+        if self.alg_name == "A*":
+            self.solution_dict = ps.a_star()
+        if self.alg_name == "greedy":
+            self.solution_dict = ps.greedy()
+        if self.alg_name == "random":
+            self.solution_dict = ps.random(100)
+
+        solution = self.solution_dict["visited_states"]
+
         return solution
 
     def start_drawing(self):
@@ -648,6 +735,75 @@ class HanoiInterface(tk.Frame):
             self.representation.place_forget()
         self.representation = new_representation
         self.representation.place(relx=0.2, rely=0.4)
+
+    def get_states_position_list(self, states_type):
+        solution_path = []
+        alg_name = self.choosen_algorithm
+
+        if self.solution_dict[states_type][0].current_position != self.solution_dict[states_type][0].start_position:
+            solution_state = {"line": self.solution_dict[states_type][0].start_position[0],
+                              "column": self.solution_dict[states_type][0].start_position[1]}
+            if alg_name == "BKT" or alg_name == "DFS" and states_type != "solution":
+                solution_state["type"] = "forward"
+            solution_path.append(solution_state)
+
+        states_position_list = []
+        for state in self.solution_dict[states_type]:
+            solution_state = {"line": state.current_position[0],
+                              "column": state.current_position[1]
+                              }
+            if (alg_name == "BKT" or alg_name == "DFS") and solution_path and states_type != "solution":
+                solution_state["type"] = "forward"
+                if (solution_path[-1]["line"], solution_path[-1]["column"]) == state.current_position:
+                    solution_state["type"] = "backward"
+                if state.current_position in states_position_list:
+                    solution_state["type"] = "backward"
+
+            solution_path.append(solution_state)
+            states_position_list.append(state.current_position)
+
+        return solution_path
+
+    @staticmethod
+    def get_algorithm_type(alg_name):
+        types = {"BKT": "uninformed",
+                 "DFS": "uninformed",
+                 "BFS": "uninformed",
+                 "random": "uninformed",
+                 "bidirectional": "uninformed",
+                 "greedy": "informed",
+                 "hill_climbing": "informed",
+                 "A*": "informed",
+                 "simulated_annealing": "informed"
+                 }
+        return types[alg_name]
+
+    def write_to_json_file(self, file_path, data):
+        json.dump(data, file_path, indent=4)
+
+    def export_data(self):
+        if self.solution_dict:
+            data = {"problem_type": "Maze",
+                    "maze": self.solution_dict["visited_states"][0].maze,
+                    "start_position": self.solution_dict["visited_states"][0].start_position,
+                    "end_position": self.solution_dict["visited_states"][0].end_position,
+                    "algorithm_type": MazeInterface.get_algorithm_type(self.choosen_algorithm),
+                    "algorithm_name": self.choosen_algorithm,
+                    "solution_found": self.solution_dict["solution_found"]}
+            if self.solution_dict["solution_found"]:
+                data["solution_path"] = self.get_states_position_list("solution")
+            data["visited_position"] = self.get_states_position_list("visited_states")
+            # print(data)
+            # json_object = json.dumps(data, indent=4)
+            # json_file = open("exports/export.json", 'w')
+            # json_file.write(json_object)
+
+            files = [('JSON File', '*.json')]
+            file_path = asksaveasfile(filetypes=files, defaultextension=json, initialfile='representation')
+            self.write_to_json_file(file_path, data)
+
+        else:
+            return 0
 
 
 class HanoiRepr(tk.Frame):
