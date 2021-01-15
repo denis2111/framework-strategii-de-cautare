@@ -119,7 +119,8 @@ class MazeInterface(tk.Frame):
         self.choosen_algorithm = tk.StringVar(self)
         self.choosen_algorithm.set("DFS")
         self.algorithm = tk.OptionMenu(self, self.choosen_algorithm, "BKT", "BFS", "DFS", "random", "bidirectional",
-                                       "greedy", "hill_climbing", command=self.algorithm_options)
+                                       "greedy", "hill_climbing", "A*", "simulated_annealing",
+                                       command=self.algorithm_options)
 
         self.algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
         self.algorithm.grid(row=3, column=2)
@@ -171,7 +172,10 @@ class MazeInterface(tk.Frame):
                  "random": "uninformed",
                  "bidirectional": "uninformed",
                  "greedy": "informed",
-                 "hill_climbing": "informed"}
+                 "hill_climbing": "informed",
+                 "A*": "informed",
+                 "simulated_annealing": "informed"
+                 }
         return types[alg_name]
 
     def export_data(self):
@@ -319,11 +323,57 @@ class MazeInterface(tk.Frame):
         elif self.algorithm == "hill_climbing":
             self.solution = self.ps.hill_climbing()
             self.hill_play()
+        elif self.algorithm == "A*":
+            self.solution = self.ps.a_star()
+            self.a_star_play()
+        elif self.algorithm == "simulated_annealing":
+            self.solution = self.ps.simulated_annealing()
+            self.simulated_annealing_play()
 
         if not self.stop_play:
             self.check_final()
         self.canvas.tag_bind("cell", "<Button-1>", self.clicked)
         self.button_play.config(state=tk.NORMAL)
+
+    def simulated_annealing_play(self):
+        solution = self.solution
+        print(solution)
+        if solution["solution_found"]:
+            visited_states = solution["visited_states"][1:-1]
+        else:
+            visited_states = solution["visited_states"][1:]
+        for state in visited_states:
+            if self.stop_play:
+                break
+            print(state.current_position[0], state.current_position[1])
+            cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
+            if self.canvas.itemcget(cell_id, 'fill') == color.VISITED:
+                self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED_TWICE)
+            else:
+                if self.canvas.itemcget(cell_id, 'fill') != color.VISITED_TWICE:
+                    self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
+            self.update()
+            time.sleep(.5)
+        if solution["solution_found"]:
+            self.draw_solution(solution["solution"][1:-1])
+
+    def a_star_play(self):
+        solution = self.solution
+        print(solution)
+        if solution["solution_found"]:
+            visited_states = solution["visited_states"][1:-1]
+        else:
+            visited_states = solution["visited_states"][1:]
+        for state in visited_states:
+            if self.stop_play:
+                break
+            cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
+            if self.canvas.itemcget(cell_id, 'fill') != color.FINISH:
+                self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
+            self.update()
+            time.sleep(.5)
+        if solution["solution_found"]:
+            self.draw_solution(solution["solution"][0:-1])
 
     def bidirectional_play(self):
         solution = self.solution
