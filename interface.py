@@ -531,7 +531,8 @@ class HanoiInterface(tk.Frame):
         tk.Frame.__init__(self, master)
         tk.Frame.config(self, width=1550, height=1450, bg="orange")
         self.representation = None
-        self.draw_solution()
+        # self.draw_solution()
+        self.draw_solution_v2_1()
 
     def get_solution(self):
         state = HanoiState(3, 6, [3, 3, 3, 2, 2, 1])
@@ -554,8 +555,17 @@ class HanoiInterface(tk.Frame):
             # time.sleep(1)
             # self.after(1, lambda: self.switch_item(new_representation))
             self.after(5000, lambda: self.draw_current_step(state_info))
-        # time.sleep(1)
-        # my_repr.pack_forget()
+
+    def draw_solution_v2_1(self):
+        solution = self.get_solution()
+        self.draw_solution_v2_2(solution, 0)
+        print("AM SOLUTIA")
+
+    def draw_solution_v2_2(self, intermediate_states, index_of_state):
+        state_info = intermediate_states[index_of_state].tower_pieces()
+        self.draw_current_step(state_info)
+        if index_of_state <= len(intermediate_states) - 2:
+            self.after(1500, lambda: self.draw_solution_v2_2(intermediate_states, index_of_state + 1))
 
     def draw_current_step(self, state_info):
         nr_of_towers = len(state_info.keys())
@@ -573,7 +583,8 @@ class HanoiInterface(tk.Frame):
             w_tmp.create_rectangle(0, 0, nr_pieces * 25, 10, fill="blue")
             for i in range(0, len(state_info[f + 1])):
                 w[i] = tk.Canvas(frames[f], width=(state_info[f + 1][i]) * 25, height=26)
-                w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces - state_info[f + 1][i] + 1))
+                # w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces - state_info[f + 1][i] + 1))
+                w[i].grid(row=nr_pieces - i - 1, column=0)
                 w[i].create_rectangle(0, 0, state_info[f + 1][i] * 25, 25, fill="black")
             for i in range(len(state_info[f + 1]), nr_pieces):
                 w[i] = tk.Canvas(frames[f], width=nr_pieces * 25, height=26)
