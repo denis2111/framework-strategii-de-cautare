@@ -44,12 +44,14 @@ class ProblemSolver:
                 "visited_states": visited_states,
                 }
 
-    def BKT(self, problem=None, visited_states=None, solution=None):
+    def BKT(self, shortest_path=False, problem=None, visited_states=None, solution=None):
         """
         At each step this algorithm will choose an unvisited neighbour and continue until it reach a final state or
         until there are no more unvisited neighbors and the algorithm will return until it can go on other path. It
         can visit the same state more then once but in different paths.
 
+        :param shortest_path: If this parameter is true, the algorithm will run until it check all paths and
+        will chose the shortest solution. Else it will stop when it finds the first final state.
         :param problem: It is only for recursion, let is None.
         :param visited_states: It is only for recursion, let is None.
         :param solution: It is only for recursion, let is None.
@@ -64,6 +66,7 @@ class ProblemSolver:
             problem = self.problem
             visited_states = [problem]
             solution = [problem]
+        best_solution = None
 
         if problem.is_final_state():
             return {"solution_found": True,
@@ -79,15 +82,24 @@ class ProblemSolver:
 
             visited_states.append(next_state)
             solution.append(next_state)
-            answer = self.BKT(next_state, visited_states,solution)
+            answer = self.BKT(shortest_path, next_state, visited_states, solution)
             if answer["solution_found"]:
-                return answer
+                if not shortest_path:
+                    return answer
+                if best_solution is None or len(best_solution) > len(answer["solution"]):
+                    best_solution = answer["solution"]
             visited_states.append(next_state)
             solution.pop()
 
-        return {"solution_found": False,
-                "visited_states": visited_states,
-                }
+        if shortest_path and best_solution:
+            return {"solution_found": True,
+                    "visited_states": visited_states,
+                    "solution": best_solution,
+                    }
+        else:
+            return {"solution_found": False,
+                    "visited_states": visited_states,
+                    }
 
     def DFS(self, problem=None, visited_states=None, solution=None):
         """
@@ -444,7 +456,7 @@ class ProblemSolver:
         problem = self.problem
 
         possible_states = PriorityQueue()
-        possible_states.put(ComparableItem(problem.score_function(), (problem, None, 0)))
+        possible_states.put(ComparableItem(problem.score_function(), (problem, None, 0),  problem.score_function()))
         visited_states = []
 
         while not possible_states.empty():
@@ -466,7 +478,8 @@ class ProblemSolver:
             next_states = current_state.get_next_states()
             for next_state in next_states:
                 possible_states.put(ComparableItem(next_state.score_function() + path_length,
-                                                   (next_state, len(visited_states) - 1, path_length + 1)))
+                                                   (next_state, len(visited_states) - 1, path_length + 1),
+                                                   next_state.score_function()))
 
         return {"solution_found": False,
                 "visited_states": [vs[0] for vs in visited_states],
@@ -497,4 +510,10 @@ class ProblemSolver:
 @dataclass(order=True)
 class ComparableItem:
     priority: int
+    second_priority: int
     item: Any=field(compare=False)
+
+    def __init__(self, priority, item, second_priority = 0):
+        self.priority = priority
+        self.item = item
+        self.second_priority = second_priority
