@@ -529,20 +529,48 @@ class MazeInterface(tk.Frame):
 class HanoiInterface(tk.Frame):
     def __init__(self, master, size=35):
         tk.Frame.__init__(self, master)
-        tk.Frame.config(self, width=1550, height=1450, bg="orange")
+        tk.Frame.config(self, width=550, height=550)
         self.representation = None
+        self.pieces_label = tk.Label(self, text="Nr of Pieces:", font=('Helvetica', 15))
+        self.pieces_label.place(relx=0.05, rely=0.05)
+        self.pieces_input = tk.StringVar(self, value="4")
+        self.pieces_entry = tk.Entry(self, font=('Helvetica', 16), textvariable=self.pieces_input, fg="black",
+                                     bg="white", width=2)
+        self.pieces_entry.place(relx=0.28, rely=0.05)
+
+        self.towers_label = tk.Label(self, text="Nr of Towers:", font=('Helvetica', 15))
+        self.towers_label.place(relx=0.35, rely=0.05)
+        self.towers_input = tk.StringVar(self, value="3")
+        self.towers_entry = tk.Entry(self, font=('Helvetica', 16), textvariable=self.towers_input, fg="black",
+                                     bg="white", width=2)
+        self.towers_entry.place(relx=0.59, rely=0.05)
+
+        self.initial_tower_label = tk.Label(self, text="Initial tower:", font=('Helvetica', 15))
+        self.initial_tower_label.place(relx=0.67, rely=0.05)
+        self.initial_tower_input = tk.StringVar(self, value="1")
+        self.initial_tower_entry = tk.Entry(self, font=('Helvetica', 16), textvariable=self.initial_tower_input,
+                                            fg="black",
+                                            bg="white", width=2)
+        self.initial_tower_entry.place(relx=0.89, rely=0.05)
+
         self.play_button = Button(self, style='W.TButton', text="Play", command=self.start_drawing)
-        self.play_button.pack()
+        self.play_button.place(relx=0.38, rely=0.8)
+
+        self.menu_button = Button(self, style='W.TButton', text="Back", command=lambda: self.master.switch_frame(Menu))
+        self.menu_button.place(relx=0.11, rely=0.8)
         # self.start_drawing()
 
     def get_solution(self):
-        state = HanoiState(3, 6, [3, 3, 3, 2, 2, 1])
+        nr_pieces = int(self.pieces_input.get())
+        nr_towers = int(self.towers_input.get())
+        initial_tower = int(self.initial_tower_input.get())
+        state = HanoiState(nr_towers, nr_pieces, initial_tower)
         ps = ProblemSolver(state)
         solution = ps.BKT()['visited_states']
         return solution
 
     def start_drawing(self):
-        self.play_button.pack_forget()
+        self.play_button.place_forget()
         solution = self.get_solution()
         self.keep_drawing(solution, 0)
         print("AM SOLUTIA")
@@ -552,15 +580,15 @@ class HanoiInterface(tk.Frame):
         new_representation = HanoiRepr(self, state_info)
         self.switch_item(new_representation)
         if index_of_state <= len(intermediate_states) - 2:
-            self.after(500, lambda: self.keep_drawing(intermediate_states, index_of_state + 1))
+            self.after(1000, lambda: self.keep_drawing(intermediate_states, index_of_state + 1))
         else:
-            self.play_button.pack()
+            self.play_button.place(relx=0.38, rely=0.8)
 
     def switch_item(self, new_representation):
         if self.representation is not None:
-            self.representation.pack_forget()
+            self.representation.place_forget()
         self.representation = new_representation
-        self.representation.pack()
+        self.representation.place(relx=0.2, rely=0.4)
 
 
 class HanoiRepr(tk.Frame):
@@ -582,39 +610,12 @@ class HanoiRepr(tk.Frame):
             w_tmp.create_rectangle(0, 0, nr_pieces * 25, 10, fill="blue")
             for i in range(0, len(state_info[f + 1])):
                 w[i] = tk.Canvas(frames[f], width=(state_info[f + 1][i]) * 25, height=26)
-                # w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces - state_info[f + 1][i] + 1))
                 w[i].grid(row=nr_pieces - i - 1, column=0)
                 w[i].create_rectangle(0, 0, state_info[f + 1][i] * 25, 25, fill="black")
             for i in range(len(state_info[f + 1]), nr_pieces):
                 w[i] = tk.Canvas(frames[f], width=nr_pieces * 25, height=26)
                 w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces + 1))
                 w[i].create_rectangle(0, 0, nr_pieces * 25, 25, fill="white")
-
-    def draw_current_step(self, state_info):
-        nr_of_towers = len(state_info.keys())
-        nr_pieces = 0
-        for pieces in state_info.values():
-            nr_pieces += len(pieces)
-        w = list(range(nr_pieces))
-        frames = []
-        for k in range(nr_of_towers):
-            frames.append(Frame(self, height=nr_pieces * 100, width=(nr_pieces + 1) * 25))
-            frames[k].grid(row=0, column=k)
-        for f in range(nr_of_towers):
-            w_tmp = tk.Canvas(frames[f], width=nr_pieces * 25, height=26)
-            w_tmp.grid(row=nr_pieces, column=0, columnspan=(nr_pieces + 1))
-            w_tmp.create_rectangle(0, 0, nr_pieces * 25, 10, fill="blue")
-            print(state_info)
-            for i in range(0, len(state_info[f + 1])):
-                w[i] = tk.Canvas(frames[f], width=(state_info[f + 1][i]) * 25, height=26)
-                w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces - state_info[f + 1][i] + 1))
-                w[i].create_rectangle(0, 0, state_info[f + 1][i] * 25, 25, fill="black")
-            for i in range(len(state_info[f + 1]), nr_pieces):
-                print(i, f, len(w), len(frames))
-                w[i] = tk.Canvas(frames[f], width=nr_pieces * 25, height=26)
-                w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces + 1))
-                w[i].create_rectangle(0, 0, nr_pieces * 25, 25, fill="white")
-        self.update()
 
 
 if __name__ == '__main__':

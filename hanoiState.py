@@ -3,7 +3,7 @@ from copy import deepcopy
 
 
 class HanoiState(ProblemState):
-    def __init__(self, nr_towers, nr_pieces, pieces):
+    def __init__(self, nr_towers, nr_pieces, initial_tower, pieces=None):
         """
         :param nr_towers: number of towers
         :param nr_pieces: number of pieces
@@ -12,17 +12,25 @@ class HanoiState(ProblemState):
                 (the biggest piece is first, the smallest is the last)
         """
         super().__init__()
-        assert (len(pieces) == nr_pieces)
         self.nr_poles = nr_towers
         self.nr_pieces = nr_pieces
+        if pieces is None:
+            pieces = [initial_tower] * nr_pieces
         self.representation = [nr_towers] + pieces
+        self.initial_tower = initial_tower
 
     def is_final_state(self):
         biggest_piece_pole = self.representation[1]
+        if biggest_piece_pole == self.initial_tower:
+            return False
         for piece_pole in self.representation[1:]:
             if piece_pole != biggest_piece_pole:
                 return False
         return True
+        # for piece_pole in self.representation[1:]:
+        #     if piece_pole != self.destination_tower:
+        #         return False
+        # return True
 
     def get_tower_of_piece(self, piece_size):
         return self.representation[self.nr_pieces - piece_size + 1]
@@ -61,7 +69,8 @@ class HanoiState(ProblemState):
             for new_tower in new_tower_choices:
                 new_representation = deepcopy(self.representation)
                 new_representation[self.nr_pieces - piece_to_be_moved + 1] = new_tower
-                next_states.append(HanoiState(self.nr_poles, self.nr_pieces, new_representation[1:]))
+                next_states.append(
+                    HanoiState(self.nr_poles, self.nr_pieces, self.initial_tower, new_representation[1:]))
         # print(next_states[0].representation)
         return next_states
 
@@ -80,8 +89,6 @@ def my_func():
 
 
 if __name__ == '__main__':
-    from problemSolver import ProblemSolver
-
     state = HanoiState(3, 6, [3, 3, 3, 2, 2, 1])
     print(getattr(state, "tower_pieces")())
     my_func()
