@@ -532,7 +532,7 @@ class HanoiInterface(tk.Frame):
         tk.Frame.config(self, width=1550, height=1450, bg="orange")
         self.representation = None
         # self.draw_solution()
-        self.draw_solution_v2_1()
+        self.start_drawing()
 
     def get_solution(self):
         state = HanoiState(3, 6, [3, 3, 3, 2, 2, 1])
@@ -540,32 +540,16 @@ class HanoiInterface(tk.Frame):
         solution = ps.BKT()['visited_states']
         return solution
 
-    def draw_solution(self):
+    def start_drawing(self):
         solution = self.get_solution()
-        print("AM SOLUTIA")
-        # for state in solution:
-        #     state_info = state.tower_pieces()
-        #     self.draw_current_step(state_info)
-        #     self.update()
-        # time.sleep(.5)
-        for state in solution:
-            state_info = state.tower_pieces()
-            new_representation = HanoiRepr(self, state_info)
-            # self.switch_item(new_representation)
-            # time.sleep(1)
-            # self.after(1, lambda: self.switch_item(new_representation))
-            self.after(5000, lambda: self.draw_current_step(state_info))
-
-    def draw_solution_v2_1(self):
-        solution = self.get_solution()
-        self.draw_solution_v2_2(solution, 0)
+        self.keep_drawing(solution, 0)
         print("AM SOLUTIA")
 
-    def draw_solution_v2_2(self, intermediate_states, index_of_state):
+    def keep_drawing(self, intermediate_states, index_of_state):
         state_info = intermediate_states[index_of_state].tower_pieces()
         self.draw_current_step(state_info)
         if index_of_state <= len(intermediate_states) - 2:
-            self.after(1500, lambda: self.draw_solution_v2_2(intermediate_states, index_of_state + 1))
+            self.after(1500, lambda: self.keep_drawing(intermediate_states, index_of_state + 1))
 
     def draw_current_step(self, state_info):
         nr_of_towers = len(state_info.keys())
@@ -590,73 +574,6 @@ class HanoiInterface(tk.Frame):
                 w[i] = tk.Canvas(frames[f], width=nr_pieces * 25, height=26)
                 w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces + 1))
                 w[i].create_rectangle(0, 0, nr_pieces * 25, 25, fill="white")
-        # self.update()
-        # time.sleep(.5)
-        # self.myGui.update()
-        # if self.p[3]._size == self._n and self.p[0]._size == 0:
-        #     self.myGui.mainloop()
-
-    def switch_item(self, new_representation):
-        if self.representation is not None:
-            self.representation.pack_forget()
-        self.representation = new_representation
-        self.representation.pack()
-
-
-class HanoiRepr(tk.Frame):
-    def __init__(self, master, state_info, size=35):
-        tk.Frame.__init__(self, master)
-        tk.Frame.config(self, width=1550, height=1450, bg="blue")
-        nr_of_towers = len(state_info.keys())
-        nr_pieces = 0
-        for pieces in state_info.values():
-            nr_pieces += len(pieces)
-        w = list(range(nr_pieces))
-        frames = []
-        for k in range(nr_of_towers):
-            frames.append(Frame(self, height=nr_pieces * 100, width=(nr_pieces + 1) * 25))
-            frames[k].grid(row=0, column=k)
-        for f in range(nr_of_towers):
-            w_tmp = tk.Canvas(frames[f], width=nr_pieces * 25, height=26)
-            w_tmp.grid(row=nr_pieces, column=0, columnspan=(nr_pieces + 1))
-            w_tmp.create_rectangle(0, 0, nr_pieces * 25, 10, fill="blue")
-            for i in range(0, len(state_info[f + 1])):
-                w[i] = tk.Canvas(frames[f], width=(state_info[f + 1][i]) * 25, height=26)
-                w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces - state_info[f + 1][i] + 1))
-                w[i].create_rectangle(0, 0, state_info[f + 1][i] * 25, 25, fill="black")
-            for i in range(len(state_info[f + 1]), nr_pieces):
-                w[i] = tk.Canvas(frames[f], width=nr_pieces * 25, height=26)
-                w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces + 1))
-                w[i].create_rectangle(0, 0, nr_pieces * 25, 25, fill="white")
-
-    def draw_current_step(self, state_info):
-        nr_of_towers = len(state_info.keys())
-        nr_pieces = 0
-        for pieces in state_info.values():
-            nr_pieces += len(pieces)
-        w = list(range(nr_pieces))
-        frames = []
-        for k in range(nr_of_towers):
-            frames.append(Frame(self, height=nr_pieces * 100, width=(nr_pieces + 1) * 25))
-            frames[k].grid(row=0, column=k)
-        for f in range(nr_of_towers):
-            w_tmp = tk.Canvas(frames[f], width=nr_pieces * 25, height=26)
-            w_tmp.grid(row=nr_pieces, column=0, columnspan=(nr_pieces + 1))
-            w_tmp.create_rectangle(0, 0, nr_pieces * 25, 10, fill="blue")
-            print(state_info)
-            for i in range(0, len(state_info[f + 1])):
-                w[i] = tk.Canvas(frames[f], width=(state_info[f + 1][i]) * 25, height=26)
-                w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces - state_info[f + 1][i] + 1))
-                w[i].create_rectangle(0, 0, state_info[f + 1][i] * 25, 25, fill="black")
-            for i in range(len(state_info[f + 1]), nr_pieces):
-                print(i, f, len(w), len(frames))
-                w[i] = tk.Canvas(frames[f], width=nr_pieces * 25, height=26)
-                w[i].grid(row=nr_pieces - i - 1, column=0, columnspan=(nr_pieces + 1))
-                w[i].create_rectangle(0, 0, nr_pieces * 25, 25, fill="white")
-        self.update()
-        # self.myGui.update()
-        # if self.p[3]._size == self._n and self.p[0]._size == 0:
-        #     self.myGui.mainloop()
 
 
 if __name__ == '__main__':
