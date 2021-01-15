@@ -644,7 +644,6 @@ class HanoiInterface(tk.Frame):
 class HanoiRepr(tk.Frame):
     def __init__(self, master, state_info, size=35):
         tk.Frame.__init__(self, master)
-        tk.Frame.config(self, width=1550, height=1450, bg="blue")
         nr_of_towers = len(state_info.keys())
         nr_pieces = 0
         for pieces in state_info.values():
