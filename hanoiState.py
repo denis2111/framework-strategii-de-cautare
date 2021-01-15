@@ -1,4 +1,4 @@
-from problemState import ProblemState, ProblemType
+from problemState import ProblemState
 from copy import deepcopy
 
 
@@ -62,23 +62,37 @@ class HanoiState(ProblemState):
                 new_representation = deepcopy(self.representation)
                 new_representation[self.nr_pieces - piece_to_be_moved + 1] = new_tower
                 next_states.append(HanoiState(self.nr_poles, self.nr_pieces, new_representation[1:]))
-        print(next_states[0].representation)
+        # print(next_states[0].representation)
         return next_states
 
-    def get_problem_type(self):
-        return ProblemType.HANOI
+    def tower_pieces(self):
+        result = {}
+        for tower_index in range(1, self.nr_poles + 1):
+            result[tower_index] = []
+        for piece_size in range(self.nr_pieces, 0, -1):
+            tower_of_piece = self.get_tower_of_piece(piece_size)
+            result[tower_of_piece].append(piece_size)
+        return result
+
+
+def my_func():
+    print(type(range(5)))
 
 
 if __name__ == '__main__':
     from problemSolver import ProblemSolver
 
     state = HanoiState(3, 6, [3, 3, 3, 2, 2, 1])
+    print(getattr(state, "tower_pieces")())
+    my_func()
+    # print(state.tower_pieces())
     # state = HanoiState(3, 6, [1, 1, 1, 1, 2, 3])
     # print(state.is_final_state())
-    ps = ProblemSolver(state)
-    solution = ps.BKT()
-    if solution:
-        print("Am gasit ceva")
+    # ps = ProblemSolver(state)
+    # solution = ps.BKT()
+    # solution = ps.DFS()
+    # if solution:
+    #     print("Am gasit ceva")
     # next_transitions = state.get_next_states()
     # for new_state in next_states:
     #     print(new_state.representation)
