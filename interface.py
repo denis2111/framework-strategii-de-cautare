@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter.filedialog import asksaveasfile
 from tkinter.ttk import *
 import time
 import utils.colors as color
@@ -178,6 +179,9 @@ class MazeInterface(tk.Frame):
                  }
         return types[alg_name]
 
+    def write_to_json_file(self, file_path, data):
+        json.dump(data, file_path, indent=4)
+
     def export_data(self):
         if self.solution:
             data = {"problem_type": "Maze",
@@ -190,10 +194,15 @@ class MazeInterface(tk.Frame):
             if self.solution["solution_found"]:
                 data["solution_path"] = self.get_states_position_list("solution")
             data["visited_position"] = self.get_states_position_list("visited_states")
-            print(data)
-            json_object = json.dumps(data, indent=4)
-            json_file = open("exports/export.json", 'w')
-            json_file.write(json_object)
+            # print(data)
+            # json_object = json.dumps(data, indent=4)
+            # json_file = open("exports/export.json", 'w')
+            # json_file.write(json_object)
+
+            files = [('JSON File', '*.json')]
+            file_path = asksaveasfile(filetypes=files, defaultextension=json, initialfile='representation')
+            self.write_to_json_file(file_path, data)
+
         else:
             return 0
 
