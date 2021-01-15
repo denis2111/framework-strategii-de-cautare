@@ -38,6 +38,7 @@ class ProblemSolver:
             next_states = problem.get_next_states()
             next_state = next_states[randint(0, len(next_states) - 1)]
             visited_states.append(next_state)
+            problem = next_state
 
         return {"solution_found": False,
                 "visited_states": visited_states,
