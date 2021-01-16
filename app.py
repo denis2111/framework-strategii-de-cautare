@@ -41,11 +41,11 @@ problem = MazeState(30, 30, (0, 1), (0, 1), (2, 4), maze,
 
 ps = ProblemSolver(problem)
 
-solution = ps.simulated_annealing()
+solution = ps.BKT(shortest_path=True)
 
 if not solution:
     print("nu")
 else:
-    for state in solution["visited_states"]:
+    for state in solution["solution"]:
         print(state.current_position)
 
