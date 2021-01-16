@@ -71,7 +71,7 @@ class ProblemSolver:
         if problem.is_final_state():
             return {"solution_found": True,
                     "visited_states": visited_states,
-                    "solution": solution,
+                    "solution": solution[:],
                     }
 
         next_states = problem.get_next_states()
