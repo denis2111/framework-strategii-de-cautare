@@ -209,7 +209,7 @@ class MazeInterface(tk.Frame):
     def algorithm_options(self, event):
         print(event)
 
-        if event == "hill_climbing" or event == "greedy":
+        if event == "hill_climbing" or event == "greedy" or event == "simulated_annealing":
             self.heuristic_function_button = Button(self, style='W.TButton', text="Heuristic function",
                                                     command=lambda: self.heuristic_window())
             self.heuristic_function_button.grid(row=2, column=4, pady=20, padx=20)
@@ -351,14 +351,22 @@ class MazeInterface(tk.Frame):
             visited_states = solution["visited_states"][1:-1]
         else:
             visited_states = solution["visited_states"][1:]
+        prec_cell = None
+        prec_id = None
         for state in visited_states:
             if self.stop_play:
                 break
             print(state.current_position[0], state.current_position[1])
             cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
-            if self.canvas.itemcget(cell_id, 'fill') != color.START:
-                self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
+            if prec_cell:
+                prec_id = prec_cell[0] * self.maze_width + prec_cell[1] + 1
+            self.canvas.itemconfigure(cell_id, width=1, fill=color.CURRENT)
+            if prec_cell != self.start_cell:
+                self.canvas.itemconfigure(prec_id, width=1, fill=color.VISITED)
+            else:
+                self.canvas.itemconfigure(prec_id, width=1, fill=color.START)
             self.update()
+            prec_cell = (state.current_position[0], state.current_position[1])
             time.sleep(.5)
         if solution["solution_found"]:
             self.draw_solution(solution["solution"][1:-1])
@@ -485,11 +493,10 @@ class MazeInterface(tk.Frame):
     def draw_solution(self, solution_states):
         print(solution_states)
         for state in solution_states:
-            # if self.stop_play:
-            #     break
             print(state.current_position[0], state.current_position[1])
             cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
-            self.canvas.itemconfigure(cell_id, width=1, fill=color.SOLUTION)
+            if self.canvas.itemcget(cell_id, 'fill') != color.START:
+                self.canvas.itemconfigure(cell_id, width=1, fill=color.SOLUTION)
 
     def move_cell(self, row, col):
         if not self.keep_path and self.cell != self.start_cell:
