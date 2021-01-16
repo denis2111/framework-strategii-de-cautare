@@ -209,36 +209,43 @@ class MazeInterface(tk.Frame):
     def algorithm_options(self, event):
         print(event)
 
-        if event == "hill_climbing" or event == "greedy" or event == "simulated_annealing":
-            self.heuristic_function_button = Button(self, style='W.TButton', text="Heuristic function",
-                                                    command=lambda: self.heuristic_window())
-            self.heuristic_function_button.grid(row=2, column=4, pady=20, padx=20)
+        if event == "hill_climbing" or event == "greedy" or event == "simulated_annealing" or event == "A*":
+            if not self.heuristic_function_button:
+                self.heuristic_function_button = Button(self, style='W.TButton', text="Heuristic function",
+                                                        command=lambda: self.heuristic_window())
+                self.heuristic_function_button.grid(row=2, column=4, pady=20, padx=20)
         else:
             if self.heuristic_function_button:
                 self.heuristic_function_button.grid_forget()
+                self.heuristic_function_button = None
 
         if event == "BKT":
-            self.choosen_path = tk.StringVar(self)
-            self.choosen_path.set("Any solution")
-            self.path_option = tk.OptionMenu(self, self.choosen_path, "Any solution", "Best solution")
+            if not self.path_option:
+                self.choosen_path = tk.StringVar(self)
+                self.choosen_path.set("Any solution")
+                self.path_option = tk.OptionMenu(self, self.choosen_path, "Any solution", "Best solution")
 
-            self.path_option.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
-            self.path_option.grid(row=2, column=4, pady=20, padx=20)
+                self.path_option.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
+                self.path_option.grid(row=2, column=4, pady=20, padx=20)
         else:
             if self.path_option:
                 self.path_option.grid_forget()
+                self.path_option=None
 
         if event == "random":
-            self.random_steps_label = Label(self, text="Number of steps:", style='W.TLabel')
-            self.random_steps_label.grid(row=2, column=4)
-            self.random_steps_entry = tk.Entry(self, width=10)
-            self.random_steps_entry.insert(0, '1000')
-            self.random_steps_entry.grid(row=2, column=5, pady=20, padx=20)
+            if not self.random_steps_entry:
+                self.random_steps_label = Label(self, text="Number of steps:", style='W.TLabel')
+                self.random_steps_label.grid(row=2, column=4)
+                self.random_steps_entry = tk.Entry(self, width=10)
+                self.random_steps_entry.insert(0, '1000')
+                self.random_steps_entry.grid(row=2, column=5, pady=20, padx=20)
         else:
             if self.random_steps_label:
                 self.random_steps_label.grid_forget()
+                self.random_steps_label = None
             if self.random_steps_entry:
                 self.random_steps_entry.grid_forget()
+                self.random_steps_entry = None
 
     def draw_maze(self):
         if self.canvas:
