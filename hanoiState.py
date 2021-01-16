@@ -1,9 +1,11 @@
-from problemState import ProblemState
+from problemState import ProblemState, ProblemType
 from copy import deepcopy
+
+from utils.scoreFunction import compute_score
 
 
 class HanoiState(ProblemState):
-    def __init__(self, nr_towers, nr_pieces, initial_tower, pieces=None):
+    def __init__(self, nr_towers, nr_pieces, initial_tower, pieces=None, score_function_expr="0"):
         """
         :param nr_towers: number of towers
         :param nr_pieces: number of pieces
@@ -18,6 +20,7 @@ class HanoiState(ProblemState):
             pieces = [initial_tower] * nr_pieces
         self.representation = [nr_towers] + pieces
         self.initial_tower = initial_tower
+        self.score_function_expr = score_function_expr
 
     def is_final_state(self):
         biggest_piece_pole = self.representation[1]
@@ -70,7 +73,8 @@ class HanoiState(ProblemState):
                 new_representation = deepcopy(self.representation)
                 new_representation[self.nr_pieces - piece_to_be_moved + 1] = new_tower
                 next_states.append(
-                    HanoiState(self.nr_poles, self.nr_pieces, self.initial_tower, new_representation[1:]))
+                    HanoiState(self.nr_poles, self.nr_pieces, self.initial_tower, new_representation[1:],
+                               score_function_expr=self.score_function_expr))
         # print(next_states[0].representation)
         return next_states
 
@@ -83,15 +87,26 @@ class HanoiState(ProblemState):
             result[tower_of_piece].append(piece_size)
         return result
 
+    def score_function(self):
+        try:
+            score = compute_score(self.score_function_expr, self)
+            print("(*)(*_((_)()_()")
+            print(self.score_function_expr)
+            print("(*)(*_((_)()_()")
+            print(score)
+            if score == "wrong_function":
+                raise Exception()
+            else:
+                return score
+        except:
+            return 0
 
-def my_func():
-    print(type(range(5)))
-
+    def get_problem_type(self):
+        return ProblemType.HANOI
 
 if __name__ == '__main__':
     state = HanoiState(3, 6, [3, 3, 3, 2, 2, 1])
     print(getattr(state, "tower_pieces")())
-    my_func()
     # print(state.tower_pieces())
     # state = HanoiState(3, 6, [1, 1, 1, 1, 2, 3])
     # print(state.is_final_state())

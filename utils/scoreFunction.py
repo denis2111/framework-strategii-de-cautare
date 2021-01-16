@@ -124,17 +124,26 @@ def matrix_compute_score(expression: str, problem):
         return "wrong_function"
 
 
+def nb_pieces_on_best_pole(problem):
+    tower_info = problem.tower_pieces()
+    result = max(len(i[1]) for i in tower_info.items() if i[0] != problem.initial_tower)
+    print("!!!!!!!!!!!")
+    print(result)
+    return result
+
+
 def list_compute_score(expression: str, problem):
     number_of_poles = problem.nr_poles
     number_of_pieces = problem.nr_pieces
     container = deepcopy(problem.representation[1:])
+    nb_pieces_on_best_pole_value = nb_pieces_on_best_pole(problem)
 
     custom_valid_functions = {
         "list_min": min,
         "list_max": max,
         "list_sum": sum,
         "list_prod": list_prod,
-
+        "nb_pieces_on_best_pole": nb_pieces_on_best_pole_value,
         "number_of_poles": number_of_poles,
         "number_of_pieces": number_of_pieces,
         "container": container,

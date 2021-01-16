@@ -588,8 +588,9 @@ class MazeInterface(tk.Frame):
 class HanoiInterface(tk.Frame):
     def __init__(self, master, size=35):
         tk.Frame.__init__(self, master)
-        tk.Frame.config(self, width=550, height=550)
-        self.heuristic_formula = "abs(current_line - final_line) + abs(current_column - final_column)"
+        master.geometry("1000x550")
+        tk.Frame.config(self, width=1000, height=550)
+        self.heuristic_formula = "nb_pieces_on_best_pole"
         self.representation = None
         self.pieces_label = tk.Label(self, text="Nr of Pieces:", font=('Helvetica', 15))
         self.pieces_label.place(relx=0.05, rely=0.05)
@@ -622,7 +623,6 @@ class HanoiInterface(tk.Frame):
         self.choosen_algorithm_text = tk.StringVar(self)
         self.choosen_algorithm_text.set("DFS")
         self.choosen_algorithm = tk.OptionMenu(self, self.choosen_algorithm_text, "BKT", "BFS", "DFS", "random",
-                                               "bidirectional",
                                                "greedy", "hill_climbing", "A*", "simulated_annealing",
                                                command=self.algorithm_options)
         self.choosen_algorithm.config(width=20, font=('Lato', 12, 'bold'), foreground=color.APP)
@@ -643,7 +643,8 @@ class HanoiInterface(tk.Frame):
         default_list = ["sqrt", "sqrt_ord", "sin", "cos", "tg", "ctg", "abs", "min", "max"]
         costum_function_list = tk.Listbox(instructions, font="Lato 12")
         custom_valid_functions = ["list_min", "list_max", "list_sum", "list_prod",
-                                  "number_of_poles", "number_of_pieces", "container"
+                                  "number_of_poles", "number_of_pieces", "nb_pieces_on_best_pole_value",
+                                  "container"
                                  ]
         for item in default_list:
             default_function_list.insert(tk.END, item)
@@ -689,7 +690,7 @@ class HanoiInterface(tk.Frame):
         nr_pieces = int(self.pieces_input.get())
         nr_towers = int(self.towers_input.get())
         initial_tower = int(self.initial_tower_input.get())
-        state = HanoiState(nr_towers, nr_pieces, initial_tower)
+        state = HanoiState(nr_towers, nr_pieces, initial_tower, score_function_expr=self.heuristic_formula)
         ps = ProblemSolver(state)
         print(self.alg_name)
         if self.alg_name == "BKT":
@@ -698,8 +699,6 @@ class HanoiInterface(tk.Frame):
             self.solution_dict = ps.DFS()
         if self.alg_name == "BFS":
             self.solution_dict = ps.BFS()
-        if self.alg_name == "bidirectional":
-            self.solution_dict = ps.bidirectional()
         if self.alg_name == "hill_climbing":
             self.solution_dict = ps.hill_climbing()
         if self.alg_name == "simulated_annealing":
@@ -712,7 +711,7 @@ class HanoiInterface(tk.Frame):
             self.solution_dict = ps.random(100)
 
         solution = self.solution_dict["visited_states"]
-
+        print(self.solution_dict)
         return solution
 
     def start_drawing(self):
@@ -770,7 +769,6 @@ class HanoiInterface(tk.Frame):
                  "DFS": "uninformed",
                  "BFS": "uninformed",
                  "random": "uninformed",
-                 "bidirectional": "uninformed",
                  "greedy": "informed",
                  "hill_climbing": "informed",
                  "A*": "informed",
