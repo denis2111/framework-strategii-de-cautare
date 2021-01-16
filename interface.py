@@ -77,7 +77,7 @@ class MazeInterface(tk.Frame):
         self.heuristic_function_button = None
         self.heuristic_formula = "abs(current_line - final_line) + abs(current_column - final_column)"
         self.path_option = None
-        self.bkt_option = 0
+        self.bkt_option = False
         self.random_steps_label = None
         self.random_steps_entry = None
         self.size = size
@@ -309,10 +309,10 @@ class MazeInterface(tk.Frame):
         self.canvas.tag_unbind("cell", "<Button-1>")
         if self.algorithm == "BKT":
             if self.choosen_path.get() == "Any solution":
-                self.bkt_option = 0
+                self.bkt_option = False
             else:
-                self.bkt_option = 1
-            self.solution = self.ps.BKT()
+                self.bkt_option = True
+            self.solution = self.ps.BKT(self.bkt_option)
             self.BKT_play()
         elif self.algorithm == "DFS":
             self.solution = self.ps.DFS()
@@ -356,11 +356,8 @@ class MazeInterface(tk.Frame):
                 break
             print(state.current_position[0], state.current_position[1])
             cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
-            if self.canvas.itemcget(cell_id, 'fill') == color.VISITED:
-                self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED_TWICE)
-            else:
-                if self.canvas.itemcget(cell_id, 'fill') != color.VISITED_TWICE:
-                    self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
+            if self.canvas.itemcget(cell_id, 'fill') != color.START:
+                self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
             self.update()
             time.sleep(.5)
         if solution["solution_found"]:
@@ -422,9 +419,12 @@ class MazeInterface(tk.Frame):
             if self.canvas.itemcget(cell_id, 'fill') == color.VISITED:
                 self.canvas.itemconfigure(cell_id, width=1, fill=color.CLEAR)
             else:
-                self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
+                if self.canvas.itemcget(cell_id, 'fill') != color.START and self.canvas.itemcget(cell_id,
+                                                                                                 'fill') != color.FINISH:
+                    self.canvas.itemconfigure(cell_id, width=1, fill=color.VISITED)
             self.update()
             time.sleep(.5)
+        print(solution["solution_found"])
         if solution["solution_found"]:
             self.draw_solution(solution["solution"][1:-1])
 
@@ -483,9 +483,11 @@ class MazeInterface(tk.Frame):
                 self.draw_solution(solution["solution"][1:-1])
 
     def draw_solution(self, solution_states):
+        print(solution_states)
         for state in solution_states:
             # if self.stop_play:
             #     break
+            print(state.current_position[0], state.current_position[1])
             cell_id = state.current_position[0] * self.maze_width + state.current_position[1] + 1
             self.canvas.itemconfigure(cell_id, width=1, fill=color.SOLUTION)
 
@@ -644,7 +646,7 @@ class HanoiInterface(tk.Frame):
         custom_valid_functions = ["list_min", "list_max", "list_sum", "list_prod",
                                   "number_of_poles", "number_of_pieces", "nb_pieces_on_best_pole_value",
                                   "container"
-                                 ]
+                                  ]
         for item in default_list:
             default_function_list.insert(tk.END, item)
         for item in custom_valid_functions:
