@@ -143,7 +143,8 @@ class MazeInterface(tk.Frame):
 
         if self.solution[states_type][0].current_position != self.solution[states_type][0].start_position:
             solution_state = {"line": self.solution[states_type][0].start_position[0],
-                              "column": self.solution[states_type][0].start_position[1]}
+                              "column": self.solution[states_type][0].start_position[1]
+                              }
             if alg_name == "BKT" or alg_name == "DFS" and states_type != "solution":
                 solution_state["type"] = "forward"
             solution_path.append(solution_state)
@@ -151,7 +152,7 @@ class MazeInterface(tk.Frame):
         states_position_list = []
         for state in self.solution[states_type]:
             solution_state = {"line": state.current_position[0],
-                              "column": state.current_position[1]
+                              "column": state.current_position[1],
                               }
             if (alg_name == "BKT" or alg_name == "DFS") and solution_path and states_type != "solution":
                 solution_state["type"] = "forward"
@@ -159,6 +160,8 @@ class MazeInterface(tk.Frame):
                     solution_state["type"] = "backward"
                 if state.current_position in states_position_list:
                     solution_state["type"] = "backward"
+            if alg_name in ["greedy", "hill_climbing", "A*", "simulated_annealing"]:
+                solution_state["score"] = state.score_function()
 
             solution_path.append(solution_state)
             states_position_list.append(state.current_position)
@@ -194,11 +197,6 @@ class MazeInterface(tk.Frame):
             if self.solution["solution_found"]:
                 data["solution_path"] = self.get_states_position_list("solution")
             data["visited_position"] = self.get_states_position_list("visited_states")
-            # print(data)
-            # json_object = json.dumps(data, indent=4)
-            # json_file = open("exports/export.json", 'w')
-            # json_file.write(json_object)
-
             files = [('JSON File', '*.json')]
             file_path = asksaveasfile(filetypes=files, defaultextension=json, initialfile='representation')
             self.write_to_json_file(file_path, data)
@@ -576,17 +574,38 @@ class MazeInterface(tk.Frame):
 
     def display_instructions(self):
         instructions = tk.Toplevel(self)
+        instructions.geometry("690x350")
         Label(instructions, text="Available functions", font="Lato 14", foreground=color.FINISH,
               justify='center').grid(row=0, columnspan=2, pady=20, padx=20)
         default_function_list = tk.Listbox(instructions, font="Lato 12")
-        default_list = ["sqrt", "sqrt_ord", "sin", "cos", "tg", "ctg", "abs", "min", "max"]
-        costum_function_list = tk.Listbox(instructions, font="Lato 12")
-        custom_valid_functions = ["line_min", "line_max", "line_sum", "line_prod",
-                                  "matrix_min", "matrix_max", "matrix_sum", "matrix_prod", "matrix_column_index",
-                                  "matrix_line_index",
-                                  "number_of_lines", "number_of_columns", "current_line", "current_column",
-                                  "final_line", "final_column",
-                                  "start_line", "start_column", "container"]
+        default_list = ["sqrt()", "sqrt_ord(expr, ord:int)",
+                        "sin()", "cos()", "tg()", "ctg()", "abs()", "min()", "max()"]
+        costum_function_list = tk.Listbox(instructions, font="Lato 12", width=45)
+        custom_valid_functions = [
+                                  "FUNCTIONS",
+                                  "line_min(line: List)",
+                                  "line_max(line: List)",
+                                  "line_sum(line: List)",
+                                  "line_prod(line: List)",
+                                  "matrix_min(matrix: List)",
+                                  "matrix_max(matrix: List)",
+                                  "matrix_sum(matrix: List)",
+                                  "matrix_prod(matrix: List)",
+                                  "matrix_column_index(matrix: List, value: int)",
+                                  "matrix_line_index(matrix: List, value: int)",
+                                  "",
+                                  "CONSTANTS",
+                                  "number_of_lines",
+                                  "number_of_columns",
+                                  "current_line",
+                                  "current_column",
+                                  "final_line",
+                                  "final_column",
+                                  "start_line",
+                                  "start_column",
+                                  "",
+                                  "PROBLEM REPRESENTATION",
+                                  "representation"]
         for item in default_list:
             default_function_list.insert(tk.END, item)
         for item in custom_valid_functions:
@@ -606,7 +625,7 @@ class HanoiInterface(tk.Frame):
         tk.Frame.__init__(self, master)
         master.geometry("1000x550")
         tk.Frame.config(self, width=1000, height=550)
-        self.heuristic_formula = "nb_pieces_on_best_pole"
+        self.heuristic_formula = "-list_max(remove_pieces_from_tower(pieces_repr, start_pole))"
         self.representation = None
         self.pieces_label = tk.Label(self, text="Nr of Pieces:", font=('Helvetica', 15))
         self.pieces_label.place(relx=0.05, rely=0.05)
@@ -652,22 +671,36 @@ class HanoiInterface(tk.Frame):
 
     def display_instructions(self):
         instructions = tk.Toplevel(self)
-        # instructions.geometry("450x400")
+        instructions.geometry("690x350")
         Label(instructions, text="Available functions", font="Lato 14", foreground=color.FINISH,
               justify='center').grid(row=0, columnspan=2, pady=20, padx=20)
-        default_function_list = tk.Listbox(instructions, font="Lato 12")
-        default_list = ["sqrt", "sqrt_ord", "sin", "cos", "tg", "ctg", "abs", "min", "max"]
-        costum_function_list = tk.Listbox(instructions, font="Lato 12")
-        custom_valid_functions = ["list_min", "list_max", "list_sum", "list_prod",
-                                  "number_of_poles", "number_of_pieces", "nb_pieces_on_best_pole_value",
-                                  "container"
+        default_function_list = tk.Listbox(instructions, font="Lato 12", width=20)
+        default_list = ["sqrt()", "sqrt_ord(expr, ord:int)", "sin()", "cos()", "tg()", "ctg()", "abs()", "min()", "max()"]
+        costum_function_list = tk.Listbox(instructions, font="Lato 12", width=42)
+        custom_valid_functions = [
+                                  "FUNCTIONS",
+                                  "list_min(container:List)",
+                                  "list_max(container:List)",
+                                  "list_sum(container:List)",
+                                  "list_prod(container:List)",
+                                  "remove_pieces_from_tower(container:List, index:int)",
+                                  "",
+                                  "CONSTANTS",
+                                  "number_of_poles",
+                                  "number_of_pieces",
+                                  "start_pole",
+                                  "nb_pieces_on_best_pole_value",
+                                  "",
+                                  "PROBLEM REPRESENTATION",
+                                  "pieces_repr",
+                                  "representation"
                                   ]
         for item in default_list:
             default_function_list.insert(tk.END, item)
         for item in custom_valid_functions:
             costum_function_list.insert(tk.END, item)
-        default_function_list.grid(row=1, column=0, pady=20, padx=20)
-        costum_function_list.grid(row=1, column=1, pady=20, padx=20)
+        default_function_list.grid(row=1, column=0, pady=20, padx=50)
+        costum_function_list.grid(row=1, column=1, pady=20, padx=10)
 
     def save_formula(self, T):
         print(T.get("1.0", "end-1c"))
@@ -743,7 +776,7 @@ class HanoiInterface(tk.Frame):
         if index_of_state <= len(intermediate_states) - 2:
             self.after(1000, lambda: self.keep_drawing(intermediate_states, index_of_state + 1))
         else:
-            self.play_button.place(relx=0.38, rely=0.8)
+            self.play_button.place(relx=0.45, rely=0.8)
 
     def switch_item(self, new_representation):
         if self.representation is not None:
@@ -767,10 +800,16 @@ class HanoiInterface(tk.Frame):
     def write_to_json_file(self, file_path, data):
         json.dump(data, file_path, indent=4)
 
-    def functie(self, states_list):
+    def get_states_list(self, states_list):
         result_list = []
         for state in states_list:
-            result_list.append(state.representation)
+            if self.alg_name in ["greedy", "hill_climbing", "A*", "simulated_annealing"]:
+                dictionary = {"state": state.representation,
+                              "score": state.score_function()}
+            else:
+                dictionary = {"state": state.representation}
+
+            result_list.append(dictionary)
         return result_list
 
     def export_data(self):
@@ -783,8 +822,8 @@ class HanoiInterface(tk.Frame):
                     "algorithm_name": self.alg_name,
                     "solution_found": self.solution_dict["solution_found"]}
             if self.solution_dict["solution_found"]:
-                data["solution_states"] = self.functie(self.solution_dict["solution"])
-            data["visited_states"] = self.functie(self.solution_dict["visited_states"])
+                data["solution_states"] = self.get_states_list(self.solution_dict["solution"])
+            data["visited_states"] = self.get_states_list(self.solution_dict["visited_states"])
             files = [('JSON File', '*.json')]
             file_path = asksaveasfile(filetypes=files, defaultextension=json, initialfile='representation')
             self.write_to_json_file(file_path, data)

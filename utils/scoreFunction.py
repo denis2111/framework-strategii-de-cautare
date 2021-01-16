@@ -84,10 +84,7 @@ def matrix_compute_score(expression: str, problem):
     current_line, current_column = problem.current_position
     final_line, final_column = problem.end_position
     start_line, start_column = problem.start_position
-    # print(current_line, current_column)
-    # print(final_line, final_column)
-
-    container = deepcopy(problem.maze)
+    representation = deepcopy(problem.maze)
 
     custom_valid_functions = {
         "line_min": min,
@@ -110,7 +107,7 @@ def matrix_compute_score(expression: str, problem):
         "final_column": final_column,
         "start_line": start_line,
         "start_column": start_column,
-        "container": container,
+        "representation": representation,
     }
     all_valid_functions = default_valid_functions.copy()
     all_valid_functions.update(custom_valid_functions)
@@ -120,22 +117,27 @@ def matrix_compute_score(expression: str, problem):
         if expression_value is None or "=" in expression:
             raise Exception
         return expression_value
-    except:
+    except NameError:
         return "wrong_function"
 
 
 def nb_pieces_on_best_pole(problem):
     tower_info = problem.tower_pieces()
     result = max(len(i[1]) for i in tower_info.items() if i[0] != problem.initial_tower)
-    print("!!!!!!!!!!!")
-    print(result)
     return result
+
+
+def remove_pieces_from_tower(container: List, index):
+    container[index - 1] = 0
+    return container
 
 
 def list_compute_score(expression: str, problem):
     number_of_poles = problem.nr_poles
     number_of_pieces = problem.nr_pieces
-    container = deepcopy(problem.representation[1:])
+    start_pole = problem.initial_tower
+    representation = deepcopy(problem.representation[1:])
+    pieces_representation = [len(i[1]) for i in problem.tower_pieces().items()].copy()
     nb_pieces_on_best_pole_value = nb_pieces_on_best_pole(problem)
 
     custom_valid_functions = {
@@ -144,9 +146,12 @@ def list_compute_score(expression: str, problem):
         "list_sum": sum,
         "list_prod": list_prod,
         "nb_pieces_on_best_pole": nb_pieces_on_best_pole_value,
+        "remove_pieces_from_tower": remove_pieces_from_tower,
         "number_of_poles": number_of_poles,
         "number_of_pieces": number_of_pieces,
-        "container": container,
+        "start_pole": start_pole,
+        "pieces_repr": pieces_representation,
+        "representation": representation,
     }
     all_valid_functions = default_valid_functions.copy()
     all_valid_functions.update(custom_valid_functions)
@@ -156,7 +161,7 @@ def list_compute_score(expression: str, problem):
         if expression_value is None or "=" in expression:
             raise Exception
         return expression_value
-    except:
+    except NameError:
         return "wrong_function"
 
 

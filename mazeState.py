@@ -54,13 +54,11 @@ class MazeState(ProblemState):
     def score_function(self):
         try:
             score = compute_score(self.score_function_expr, self)
-            # print(self.score_function_expr)
-            # print(score)
             if score == "wrong_function":
                 raise Exception()
             else:
                 return score
-        except:
+        except NameError:
             return 0
 
     def get_reversed_problem(self):

@@ -30,10 +30,6 @@ class HanoiState(ProblemState):
             if piece_pole != biggest_piece_pole:
                 return False
         return True
-        # for piece_pole in self.representation[1:]:
-        #     if piece_pole != self.destination_tower:
-        #         return False
-        # return True
 
     def get_tower_of_piece(self, piece_size):
         return self.representation[self.nr_pieces - piece_size + 1]
@@ -75,7 +71,6 @@ class HanoiState(ProblemState):
                 next_states.append(
                     HanoiState(self.nr_poles, self.nr_pieces, self.initial_tower, new_representation[1:],
                                score_function_expr=self.score_function_expr))
-        # print(next_states[0].representation)
         return next_states
 
     def tower_pieces(self):
@@ -88,6 +83,7 @@ class HanoiState(ProblemState):
         return result
 
     def score_function(self):
+        print(self.score_function_expr)
         try:
             score = compute_score(self.score_function_expr, self)
             print("(*)(*_((_)()_()")
@@ -98,7 +94,7 @@ class HanoiState(ProblemState):
                 raise Exception()
             else:
                 return score
-        except:
+        except NameError:
             return 0
 
     def get_problem_type(self):
