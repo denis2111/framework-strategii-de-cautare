@@ -530,6 +530,7 @@ class MazeInterface(tk.Frame):
             if self.canvas.itemcget(i, 'fill') == color.VISITED or \
                     self.canvas.itemcget(i, 'fill') == color.COMMON or \
                     self.canvas.itemcget(i, 'fill') == color.SOLUTION or \
+                    self.canvas.itemcget(i, 'fill') == color.CURRENT or \
                     self.canvas.itemcget(i, 'fill') == color.MEMORIZED:
                 self.canvas.itemconfigure(i, width=1, fill=color.CLEAR)
 
