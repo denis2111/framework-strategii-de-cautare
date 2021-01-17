@@ -27,8 +27,11 @@
 
 # Distributia echipei:
   La inceput am avut o intalnire in care toti am discutat despre arhitectura aplicatie, la urmatoarea intalnire, am inceput sa o dezvoltam.
+  
   Banu Denis s-a ocupat de partea de algoritmi
+  
   Filimon Raluca si Simion Andra s-au ocupat de reprezeentarea problemei Maze si baza interfetei grafice
+  
   Popa Andrei si Avram Andrei s-au ocupat de reprezentarea problemei Hanoi
 
 # Echipa
